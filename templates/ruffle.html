@@ -3,6 +3,94 @@
 
 <head>
     <!-- Meta -->
+     <style>
+    #pvp-notification {
+        display: none;
+        position: fixed;
+
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        z-index: 99999;
+
+        width: 320px;
+        padding: 18px;
+        
+
+        
+
+        background: linear-gradient(180deg, #2d2a24 0%, #191714 100%);
+        border: 2px solid #d5a632;
+        border-radius: 12px;
+
+        color: #fff;
+        font-family: Arial, sans-serif;
+
+        box-shadow:
+            0 8px 25px rgba(0, 0, 0, 0.55),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+        animation: pvpSlideIn 0.35s ease-out;
+    }
+
+    #pvp-notification-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ffd75a;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 2px #000;
+    }
+
+    #pvp-notification-text {
+        font-size: 14px;
+        line-height: 1.7;
+        color: #eeeeee;
+    }
+
+    #pvp-notification-text strong {
+        color: #ffd75a;
+    }
+
+    #pvp-notification-close {
+        width: 100%;
+        margin-top: 15px;
+        padding: 9px 12px;
+
+        border: 1px solid #e5ba48;
+        border-radius: 7px;
+
+        background: linear-gradient(180deg, #f1c84c, #c89424);
+        color: #201a0f;
+
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+
+        transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    #pvp-notification-close:hover {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+    }
+
+    #pvp-notification-close:active {
+        transform: translateY(1px);
+    }
+
+    @keyframes pvpSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
     <meta charset="utf-8"/>
 
     <!-- Title and Icon -->
@@ -219,8 +307,84 @@
 
         });
     </script>
+<div id="pvp-notification">
+    <div id="pvp-notification-title">
+        ⚔ You were attacked!
+    </div>
 
-</center>
+    <div id="pvp-notification-text"></div>
+
+    <button id="pvp-notification-close">
+        OK
+    </button>
+</div>
+
+<script>
+    fetch("/api/pvp/unseen")
+        .then(response => response.json())
+        .then(data => {
+            if (data.count > 0) {
+                const battle = data.battles[0];
+
+                const box =
+                    document.getElementById("pvp-notification");
+
+                const text =
+                    document.getElementById("pvp-notification-text");
+
+                text.innerHTML =
+                    "<strong>Attacker:</strong> " +
+                    (battle.attacker_username || "Unknown player") +
+                    "<br>" +
+
+                    "<strong>Result:</strong> " +
+                    (battle.win === 1
+                        ? "Attacker won"
+                        : "Defense successful") +
+                    "<br>" +
+
+                    "<strong>Gold:</strong> " +
+                    battle.gold +
+                    "<br>" +
+
+                    "<strong>XP:</strong> " +
+                    battle.xp +
+                    "<br>" +
+
+                    "<strong>Honor:</strong> " +
+                    battle.honor;
+
+                box.style.display = "block";
+            }
+        })
+        .catch(error => {
+            console.error("Failed to load PvP notifications:", error);
+        });
+
+
+    document
+        .getElementById("pvp-notification-close")
+        .addEventListener("click", function () {
+
+            fetch("/api/pvp/mark-seen", {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(() => {
+                document.getElementById(
+                    "pvp-notification"
+                ).style.display = "none";
+            })
+            .catch(error => {
+                console.error(
+                    "Failed to mark PvP notification as seen:",
+                    error
+                );
+            });
+
+        });
+</script>
 
 </body>
 </html>
+

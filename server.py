@@ -20,7 +20,8 @@ from database import (
     get_received_pvp_battles,
     get_sent_pvp_battles,
     get_unseen_pvp_battles,
-    mark_pvp_battles_seen
+    mark_pvp_battles_seen,
+    get_username_by_userid
 )
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
@@ -149,13 +150,15 @@ def pvp_unseen():
             "id": row[0],
             "attacker_userid": row[1],
             "victim_userid": row[2],
+            "attacker_username": get_username_by_userid(row[1]),
             "win": row[3],
             "gold": row[4],
             "xp": row[5],
             "honor": row[6],
             "duration": row[7],
             "victim_units": json.loads(row[8]),
-            "created_at": row[9]
+            "created_at": row[9],
+            
         }
 
     return {

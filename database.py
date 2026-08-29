@@ -213,7 +213,22 @@ def mark_pvp_battles_seen(userid):
     conn.commit()
     conn.close()       
 
-   
+def get_username_by_userid(userid):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT username FROM users WHERE userid = ?",
+        (userid,)
+    )
+
+    user = cursor.fetchone()
+    conn.close()
+
+    if user is None:
+        return None
+
+    return user[0]
 
 if __name__ == "__main__":
     init_database()
