@@ -1,0 +1,10 @@
+assets/
+default01.static.socialpointgames.com/
+saves/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+.env
+.vscode/
