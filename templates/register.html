@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Social Empires - Login</title>
+    <title>Social Empires - Create Account</title>
 
     <link rel="stylesheet" href="/css/account.css">
 </head>
@@ -20,10 +20,10 @@
         alt="Social Empires"
     >
 
-    <h1>Welcome Back</h1>
+    <h1>Create Account</h1>
 
     <div class="subtitle">
-        Login to your Social Empires account
+        Create your Social Empires account
     </div>
 
     {% if message %}
@@ -40,7 +40,7 @@
             id="username"
             type="text"
             name="username"
-            placeholder="Enter your username"
+            placeholder="Choose a username"
             autocomplete="username"
             required
         >
@@ -51,20 +51,20 @@
             id="password"
             type="password"
             name="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
+            placeholder="Choose a password"
+            autocomplete="new-password"
             required
         >
 
         <button type="submit">
-            Play
+            Create Account
         </button>
 
     </form>
 
     <div class="bottom-link">
-        Don't have an account?
-        <a href="/register">Create Account</a>
+        Already have an account?
+        <a href="/">Login</a>
     </div>
 
 </div>

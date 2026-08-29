@@ -26,12 +26,14 @@ from version import version_name
 from constants import Constant
 from quests import get_quest_map
 from bundle import ASSETS_DIR, STUB_DIR, TEMPLATES_DIR, BASE_DIR
+from database import init_database, register_user, check_login, set_userid, get_userid
 
 host = '0.0.0.0'
 server_ip="192.168.8.4"
 port = 5050
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
+init_database()
 
 print (" [+] Configuring server routes...")
 
@@ -41,24 +43,70 @@ print (" [+] Configuring server routes...")
 
 ## PAGES AND RESOURCES
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def login():
-    # Log out previous session
-    session.pop('USERID', default=None)
-    session.pop('GAMEVERSION', default=None)
-    # Reload saves. Allows saves modification without server reset
-    load_saved_villages()
-    # If logging in, set session USERID, and go to play
-    if request.method == 'POST':
-        session['USERID'] = request.form['USERID']
-        session['GAMEVERSION'] = request.form['GAMEVERSION']
-        print("[LOGIN] USERID:", request.form['USERID'])
-        print("[LOGIN] GAMEVERSION:", request.form['GAMEVERSION'])
-        return redirect("/play.html")
-    # Login page
-    if request.method == 'GET':
-        saves_info = all_saves_info()
-        return render_template("login.html", saves_info=saves_info, version=version_name)
+    message = None
+
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"]
+
+        if check_login(username, password):
+
+            userid = get_userid(username)
+
+            if userid is None:
+                message = "This account has no empire."
+            else:
+                # Reload saves so newly-created villages are available
+                load_saved_villages()
+
+                session["ACCOUNT_USERNAME"] = username
+                session["USERID"] = userid
+                session["GAMEVERSION"] = "SocialEmpires0926bsec.swf"
+
+                print("[LOGIN] Username:", username)
+                print("[LOGIN] USERID:", userid)
+
+                return redirect("/ruffle.html")
+
+        else:
+            message = "Invalid username or password."
+
+    return render_template("login.html", message=message)
+
+    saves_info = all_saves_info()
+    return render_template(
+        "login.html",
+        saves_info=saves_info,
+        version=version_name
+    )
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    message = None
+
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"]
+
+        if not username or not password:
+            message = "Username and password are required."
+
+        elif register_user(username, password):
+            userid = new_village()
+            set_userid(username, userid)
+
+            print("[REGISTER] Username:", username)
+            print("[REGISTER] New USERID:", userid)
+
+            return redirect("/")
+
+        else:
+            message = "Username already exists."
+
+    return render_template("register.html", message=message)
 
 @app.route("/play.html")
 def play():
