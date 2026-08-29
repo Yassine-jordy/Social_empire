@@ -4,6 +4,7 @@ from sessions import session, save_session
 from get_game_config import get_game_config, get_level_from_xp, get_name_from_item_id, get_attribute_from_mission_id, get_xp_from_level, get_attribute_from_item_id, get_item_from_subcat_functional
 from constants import Constant
 from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
+from database import record_pvp_battle
 
 def get_strategy_type(id):
     if id == 8:
@@ -535,7 +536,59 @@ def do_command(USERID, cmd, args):
         collection_id = args[0]
         collectible_id = args[1]
         # TODO 
+    
+    elif cmd == Constant.CMD_END_ATTACK:
+        data = json.loads(args[0])
 
+        with open("pvp_last_battle.json", "w") as f:
+            json.dump(data, f, indent=4)
+
+        attacker = data["attacker"]
+        victim = data["victim"]
+
+        attacker_userid = str(attacker["user_id"])
+        victim_userid = str(victim["user_id"])
+
+        print("\n========== PVP END ATTACK ==========")
+        print("Attacker:", attacker_userid)
+        print("Victim:", victim_userid)
+        print("Win:", data["win"])
+        print("Duration:", data["duration"])
+
+        if attacker_userid != USERID:
+            print("WARNING: PvP attacker USERID mismatch!")
+            return
+
+        rewards = data.get("resources", {})
+
+        gold = int(rewards.get("g", 0))
+        xp = int(rewards.get("x", 0))
+        honor = int(data.get("honor", 0))
+        duration = int(data.get("duration", 0))
+        victim_units = data.get("victim_units", [])
+
+        record_pvp_battle(
+        attacker_userid,
+        victim_userid,
+        data.get("win", 0),
+        gold,
+        xp,
+        honor,
+        duration,
+        victim_units
+)
+
+        print("PvP battle recorded in database.")
+
+        attacker_save = session(USERID)
+        attacker_map = int(attacker.get("map", 0))
+
+        attacker_save["maps"][attacker_map]["coins"] += gold
+        attacker_save["maps"][attacker_map]["xp"] += xp
+
+        print("Gold gained:", gold)
+        print("XP gained:", xp)
+        print("====================================")
     else:
         print(f"Unhandled command '{cmd}' -> args", args)
         return

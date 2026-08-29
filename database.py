@@ -29,11 +29,16 @@ def init_database():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS pvp_battles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        userid TEXT UNIQUE,
+        attacker_userid TEXT NOT NULL,
+        victim_userid TEXT NOT NULL,
+        win INTEGER NOT NULL,
+        gold INTEGER DEFAULT 0,
+        xp INTEGER DEFAULT 0,
+        honor INTEGER DEFAULT 0,
+        duration INTEGER DEFAULT 0,
+        victim_units TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
 """)
@@ -92,6 +97,46 @@ def set_userid(username, userid):
 
     conn.commit()
     conn.close()
+def record_pvp_battle(
+    attacker_userid,
+    victim_userid,
+    win,
+    gold,
+    xp,
+    honor,
+    duration,
+    victim_units
+):
+    import json
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO pvp_battles (
+            attacker_userid,
+            victim_userid,
+            win,
+            gold,
+            xp,
+            honor,
+            duration,
+            victim_units
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        attacker_userid,
+        victim_userid,
+        int(win),
+        int(gold),
+        int(xp),
+        int(honor),
+        int(duration),
+        json.dumps(victim_units)
+    ))
+
+    conn.commit()
+    conn.close()    
 if __name__ == "__main__":
     init_database()
 
