@@ -29,19 +29,27 @@ def init_database():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS pvp_battles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        attacker_userid TEXT NOT NULL,
-        victim_userid TEXT NOT NULL,
-        win INTEGER NOT NULL,
-        gold INTEGER DEFAULT 0,
-        xp INTEGER DEFAULT 0,
-        honor INTEGER DEFAULT 0,
-        duration INTEGER DEFAULT 0,
-        victim_units TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-""")
+        CREATE TABLE IF NOT EXISTS pvp_battles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            attacker_userid TEXT NOT NULL,
+            victim_userid TEXT NOT NULL,
+            win INTEGER NOT NULL,
+            gold INTEGER DEFAULT 0,
+            xp INTEGER DEFAULT 0,
+            honor INTEGER DEFAULT 0,
+            duration INTEGER DEFAULT 0,
+            victim_units TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    try:
+        cursor.execute("""
+            ALTER TABLE pvp_battles
+            ADD COLUMN seen_by_victim INTEGER DEFAULT 0
+        """)
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
@@ -136,7 +144,77 @@ def record_pvp_battle(
     ))
 
     conn.commit()
-    conn.close()    
+    conn.close()
+
+def get_received_pvp_battles(userid, limit=20):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT *
+            FROM pvp_battles
+            WHERE victim_userid = ?
+            ORDER BY id DESC
+            LIMIT ?
+    """,    (userid, limit))
+
+        battles = cursor.fetchall()
+        conn.close()
+
+        return battles    
+
+def get_sent_pvp_battles(userid, limit=20):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT *
+            FROM pvp_battles
+            WHERE attacker_userid = ?
+            ORDER BY id DESC
+            LIMIT ?
+        """, (userid, limit))
+
+        battles = cursor.fetchall()
+        conn.close()
+
+        return battles
+
+
+def get_unseen_pvp_battles(userid):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM pvp_battles
+        WHERE victim_userid = ?
+        AND seen_by_victim = 0
+        ORDER BY id DESC
+    """, (userid,))
+
+    battles = cursor.fetchall()
+    conn.close()
+
+    return battles
+
+
+def mark_pvp_battles_seen(userid):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE pvp_battles
+        SET seen_by_victim = 1
+        WHERE victim_userid = ?
+        AND seen_by_victim = 0
+    """, (userid,))
+
+    conn.commit()
+    conn.close()       
+
+   
+
 if __name__ == "__main__":
     init_database()
 

@@ -11,7 +11,17 @@ else:
 
 print (" [+] Loading game config...")
 from get_game_config import get_game_config, patch_game_config
-
+from database import (
+    init_database,
+    register_user,
+    check_login,
+    set_userid,
+    get_userid,
+    get_received_pvp_battles,
+    get_sent_pvp_battles,
+    get_unseen_pvp_battles,
+    mark_pvp_battles_seen
+)
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
 from sessions import load_saved_villages, all_saves_userid, all_saves_info, save_info, new_village, fb_friends_str
@@ -125,7 +135,47 @@ def play():
     print("[PLAY] USERID:", USERID)
     print("[PLAY] GAMEVERSION:", GAMEVERSION)
     return render_template("play.html", save_info=save_info(USERID), serverTime=timestamp_now(), friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAMEVERSION, SERVERIP=server_ip)
+@app.route("/api/pvp/unseen")
+def pvp_unseen():
+    userid = session.get("USERID")
 
+    if not userid:
+        return {"error": "Not logged in"}, 401
+
+    battles = get_unseen_pvp_battles(userid)
+
+    def battle_to_dict(row):
+        return {
+            "id": row[0],
+            "attacker_userid": row[1],
+            "victim_userid": row[2],
+            "win": row[3],
+            "gold": row[4],
+            "xp": row[5],
+            "honor": row[6],
+            "duration": row[7],
+            "victim_units": json.loads(row[8]),
+            "created_at": row[9]
+        }
+
+    return {
+        "userid": userid,
+        "count": len(battles),
+        "battles": [battle_to_dict(row) for row in battles]
+    }
+@app.route("/api/pvp/mark-seen", methods=["POST"])
+def pvp_mark_seen():
+    userid = session.get("USERID")
+
+    if not userid:
+        return {"error": "Not logged in"}, 401
+
+    mark_pvp_battles_seen(userid)
+
+    return {
+        "success": True,
+        "userid": userid
+    }
 @app.route("/ruffle.html")
 def ruffle():
     print(session)
@@ -144,7 +194,35 @@ def ruffle():
     print("[RUFFLE] GAMEVERSION:", GAMEVERSION)
     return render_template("ruffle.html", save_info=save_info(USERID), serverTime=timestamp_now(), version=version_name, GAMEVERSION=GAMEVERSION, SERVERIP=host)
 
+@app.route("/api/pvp/history")
+def pvp_history():
+    userid = session.get("USERID")
 
+    if not userid:
+        return {"error": "Not logged in"}, 401
+
+    received = get_received_pvp_battles(userid)
+    sent = get_sent_pvp_battles(userid)
+
+    def battle_to_dict(row):
+        return {
+            "id": row[0],
+            "attacker_userid": row[1],
+            "victim_userid": row[2],
+            "win": row[3],
+            "gold": row[4],
+            "xp": row[5],
+            "honor": row[6],
+            "duration": row[7],
+            "victim_units": json.loads(row[8]),
+            "created_at": row[9]
+        }
+
+    return {
+        "userid": userid,
+        "received": [battle_to_dict(row) for row in received],
+        "sent": [battle_to_dict(row) for row in sent]
+    }
 @app.route("/new.html")
 def new():
     session['USERID'] = new_village()
