@@ -1448,6 +1448,12 @@ class Constant:
     CMD_TIME_MACHINE_FF = "time_ff"
     CMD_POP_UNIT = "pop_unit"
     CMD_PUSH_UNIT = "push_unit"
+    # Recovered from the bundled 1.2.7 client; declarations do not imply support.
+    CMD_PUSH_QUEUE_UNIT = "push_queue_unit"
+    CMD_POP_QUEUE_UNIT = "pop_queue_unit"
+    CMD_SPEED_UP_QUEUE = "speed_up_queue"
+    CMD_UNQUEUE_UNIT = "unqueue_unit"
+    CMD_SOUL_MIXER_POWERUP = "buy_powerups"
     CMD_SET_RESOURCES_TRADED = "set_resources_traded"
     CMD_TRADE_RESOURCE = "trade_resource_b"
     CMD_SAVE_MAP = "save_map"

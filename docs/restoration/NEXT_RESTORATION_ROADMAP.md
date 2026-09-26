@@ -33,7 +33,7 @@ No public deployment before these gates pass. P0 containment may explicitly disa
 ## P2 — Special systems
 
 1. Cemetery/graveyard death registration and resurrection eligibility/payment/state removal, guided by client traces.
-2. Soul Mixer: recover ActionScript request names, recipe sources, inputs, output, timing, cancellation/collection and persistent fields. **Do not implement guessed recipes.** Asset recovery is mostly a path/setup task; backend protocol is the principal gap.
+2. Soul Mixer: targeted SWF recovery completed for 1.2.7/1.4.07; unit-breeding formula, surviving parents, queue commands/state and hourly speed-up rule are known. Recover the missing original ranks/timers/global tables and real building metadata, then reconcile server-selected results with the original popup before implementing production. Paid-placement/input safeguards and formula tests are partial only. See the existing [Soul Mixer analysis](BUILDING_RESTORATION_REPORT.md#soul-mixer--dedicated-analysis). **Do not invent tables or accept client-chosen rewards.**
 3. Dragon/monster/rider progression: enforce configured costs and times, eligibility and one-time grants; fix MonsterNumber/monsterNumber inconsistency.
 4. Magic/mana, boss encounters, survival, collections, forge and event buildings: recover and implement one protocol family at a time. Explicitly label unsupported client-version features.
 5. Test each supported system through restart and failure/replay cases; leave unexplained mechanics marked unverified.
@@ -75,3 +75,5 @@ The preceding ledger describes the original audit. The last session had already 
 - [ ] Restore quest start/result together with a persisted attempt identity, eligibility, server-derived rewards and once-only completion. Never re-enable the removed result arithmetic in isolation.
 
 Soul Mixer protocol/recipes, cemetery death records, magic/mana, upgrades, training queues and production/collection lifecycle remain unresolved as recorded previously. No new client trace, asset comparison or browser playthrough was performed in this continuation.
+
+Soul Mixer continuation (26 September): user-selected priority supersedes the earlier collection task. Next unfinished Soul Mixer task is authentic config recovery plus client/server result agreement; queue execution remains unimplemented. The existing report contains the recovered protocol and tested partial implementation.

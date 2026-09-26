@@ -289,7 +289,7 @@ Tests use disposable data directories, never real player saves. They do not cert
 ## P2 — Special systems
 
 - [ ] Complete cemetery death registration, resurrection eligibility/payment and removal of the recovered death record.
-- [ ] Recover Soul Mixer requests, recipes, inputs/outputs, timing and saved state from the SWF/config/client traces, then implement the verified lifecycle. Do not guess recipes.
+- [ ] Finish Soul Mixer: SWF formula/protocol recovered and paid-placement/input guards tested; original ranks, timers, global prices/unlock data and server-selected result synchronization are still missing. Production is not restored. See the [Soul Mixer findings](docs/restoration/BUILDING_RESTORATION_REPORT.md#soul-mixer--dedicated-analysis). Parents survive mixing; do not invent recipes or consume them.
 - [ ] Enforce dragon/monster/rider server-owned prices, supported activation currencies, nest ownership, progression bounds, timing and one-time grants; reject negative prices and fix the `MonsterNumber`/`monsterNumber` inconsistency.
 - [ ] Recover and implement magic/mana, bosses, survival, collections, forge and event-building protocols individually.
 - [ ] Verify each supported special system through restart, cancellation/failure and replay cases; explicitly label unsupported client-version features.

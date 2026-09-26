@@ -26,19 +26,60 @@ All 1010 effective type=b records are inventoried below and in [BUILDING_AUDIT.c
 
 ## Soul Mixer — dedicated analysis
 
-- **Assets:** original archive has buildingsprites/1529_soulMixer.swf and buildingthumbs/1529_soulMixer.jpg, three externalized/SoulMixer assets, help images 1–4 and RecuadroInfo/soulmixer.png. None is in the updated assets path.
-- **Visual evidence:** the four supplied help images were inspected. Image 1 shows two SELECT UNIT slots; image 2 shows POWER UP with a cash-like icon; image 3 shows SPEED UP with an hourglass; image 4 depicts a creature and silhouettes. These support an intended unit-selection/progression interface, but establish no recipe, quantity, price, duration or output probability. No executable UI behavior is inferred from them.
-- **Configuration:** unchanged soulmixer_temp.json adds item 1529: cost 2000 gold, XP 200, minimum level 8, 4×4, functional subcategory 139, units_limit=1. trains, activation, expiration, collect and upgrades_to are zero. Item 1530 Hell's Forge Island shares subcategory 139, so reverse lookup by subcategory overwrites the earlier record; do not treat that lookup as a unique building identity.
-- **Placement:** generic buy adds the item. Runtime test accepted it for a level-1 player with only 250 gold, proving missing eligibility/cost checks. Move and sell manipulate the instance; this does not certify client placement/UI.
-- **UI:** assets exist, but opening and interacting with the popup was not tested. The supplied updated tree cannot run the client without asset setup. Client-version compatibility remains unverified.
-- **Commands:** generic buy reaches the handler. No dedicated Soul Mixer handler, recipe/state model or Soul Mixer command declaration was found in Python. No live mixing client trace was captured. It is unknown whether the selected SWF uses generic or absent commands.
-- **Recipes:** no recovered recipe table or authoritative input/output mapping identified in server config/code. Do not infer recipes from artwork or names.
-- **Consumption:** generic building purchase subtracts configured cost by clamping; no mixing-specific ingredient consumption found.
-- **Timers:** no mixing-specific timer/state; zero generic activation is not proof that intended mixing is instantaneous.
-- **Saving:** generic placed item can be serialized by the normal save system. A mixing job cannot be claimed to persist because no job representation was found.
-- **Collection:** generic collection of this config grants zero; no special output-grant branch found.
+Updated 26 September 2026. **Status: Partial — original client logic recovered; full mixing remains blocked by missing original data and authoritative client synchronization.** No substitute recipes or timers were installed.
 
-Status: **Partial placement, missing recovered mixing backend, UI unverified**. Next investigation: inspect the selected SWF's Soul Mixer classes and help screens, capture open/select/start/collect/cancel requests, identify recipe data sources and state deltas, then specify persistence and failure/replay behavior from evidence.
+### Evidence and client versions
+
+Targeted string/symbol inspection of all 68 bundled Flash files found `PopupSoulMixer` in 44. The default `SocialEmpires0926bsec.swf` has no Soul Mixer popup. Decompiled the relevant classes from 1.0.13, 1.2.7 and 1.4.07 with JPEXS 26.3.0. Local extracts, manifest, downloaded upstream snapshots and logs remain at `social-empire-update/AUDIT/soul_mixer/`; they are not duplicate project reports or redistributed client binaries. [JPEXS selective export reference](https://www.free-decompiler.com/flash/issues/1814-decompile-a-as-file-from-swf-command-line).
+
+- `SocialEmpires0926bsec.swf`: `072a486392cdb420ed60ea78a3dd785f55f8d61fea12719a653d2b678fe3251b`
+- `SocialEmpires1.0.13sec.swf`: `ec4f3902e874bfc96367739921543a7372e399fc846088ef33d23019f36e8849`
+- `SocialEmpires1.2.7sec.swf`: `680786158b61854957b71e242965db3afeff77cf22b94d3a740973fba6af0b74`
+- `SocialEmpires1.4.07sec.swf`: `840e6dbd63da57918071597aaecce3aea10b9bd92d3ef8be76de2521372d4754`
+
+The original archive contains the building sprite/thumb, SoulMixer background/no-soul/smoke, help images and portrait icon. Current asset-path configuration serves the archive; these assets do not provide balancing tables. Building SWF has a single building class; gameplay is in the main client classes.
+
+[Upstream initial Soul Mixer commit](https://github.com/AcidCaos/socialemperors/commit/3b855e0dc607) calls the item **Fake Soul Mixer** and derives it from a temporary unit entry. Current `soulmixer_temp.json` is still a placeholder: 2000 gold, XP 200, min level 8, 4x4, capacity zero, limit one. **These are not recovered original Soul Mixer values.** Examined all three supplied historical configs, patches, effective config, upstream current config/patch and config commit history. None supplies `breeding_order`, `sm_training_time`, `SOUL_MIXER_POWERUPS_LEVELS` or the original `SOUL_MIXER_MIN_LEVEL`.
+
+### Original mechanic recovered
+
+This is unit breeding, not resource crafting. `PopupGenericUnitSelector.getArmy` accepts owned army types with positive `breeding_order`. Two physical units enter the building via `push_unit`; two copies of the same type are permitted. **Parents survive**: after creating the output, `onBtnGet` calls `popAll`, returning both inputs. Do not implement sacrifice/ingredient destruction.
+
+In 1.2.7/1.4.07, let low/high be the input ranks. Target power is `max(10, ceil(0.3*low + 0.7*high)) + floor(Utils.getRandom(0,12))`; increment if equal to the higher input rank. `Utils.getRandom(a,b)` uses `Math.random()*(b-a+1)+a`, so the floored roll includes **12**, and the high-rank draw includes its upper bound. Above 400, draw anew from 400 through the highest configured rank. Sort positive-ranked items, choose the first non-parent at or above the target; the client falls back to the last item if none exists (even if it is a parent). No fixed pair-to-output recipe table exists in this client logic. 1.0.13 instead truncates `base - 2 + Math.random()*8`; do not mix version rules.
+
+The `POWERUPS` table supplies `cash_cost` and `order_increment`. UI debits cash and increments `_powerUpLevel` before applying the next indexed/clamped increment. Prior outcomes are excluded; rank >=400 triggers another high-rank draw. `sendPowerUps` sends each clamped purchased level on Mix. Exact prices/increments are missing; none were guessed.
+
+`IsoEngine.checkSoulMixer` automatically places a free building when the player's level reaches the missing global threshold, with no owned mixer or mixer gift. `Base` additionally caps construction at two, while the temporary config says one; a consistent original config is needed. `checkLegacy` blocks use of input IDs 2037, 2048, 758 and 777 below level 20. Output unit limits and population capacity are checked client-side. Mixing takes output `sm_training_time`, without the regular barracks gold/food debit or output XP award. Speed-up costs `ceil(remaining_seconds/3600)` cash (`COST_SPEED_UP_UNIT_QUEUE=1`). Parents cannot be changed while mixing; demolition of a training mixer is blocked in the client.
+
+### Recovered protocol (1.2.7)
+
+All actions use the existing authenticated `command.php` batch endpoint. There is no dedicated `mix_souls` request.
+
+| Action | Command / parameters | Client state |
+| --- | --- | --- |
+| Open | No new request; `EP_SelfSoulMixer.openSoulMixer` | Opens existing popup using building and queue data |
+| Select input | `push_unit [unit_x,unit_y,unit_id,building_x,building_y,town]` | Holds the original unit in building |
+| Paid reroll | `buy_powerups [clamped_level_index]`, deferred until Mix | Uses missing global cost/increment table |
+| Mix | `push_queue_unit [building_x,building_y,1529,result_id,queue_id,0]` | Local output selection; free flag is specific to breeding, not a general entitlement |
+| Speed up | `speed_up_queue [queue_id]` | Pays remaining whole-hour ceiling in cash |
+| Collect output | `pop_queue_unit [queue_id,output_x,output_y]` | Creates one queued unit |
+| Return/remove parent | `pop_unit [building_x,building_y,town,unit_id,x,y,frame]` | Returns input; repeated removal must fail |
+
+Persistence expected by `BuildingQueueManager.init`: building `attrs.bq` identifies `privateState.barracksQueues[queue_id] = {ts, amount, unit}`. `ts` is start time; the client adds output `sm_training_time`. Speed-up uses zero timestamp semantics. Popup preview fields `soulMixerItem` are a local typed object, not a proven JSON save contract. One visible mixing cycle is exposed by the popup; the generic queue manager's limit five is **not** evidence that five parallel mixes should be enabled. Soul Mixer cancellation/refund protocol was not recovered from its popup.
+
+`CommandManager` accepts `result:success` and `result:error`; no Soul Mixer-specific result is consumed. It cannot reconcile a different server-selected unit from an ordinary success reply. Accepting arbitrary client `result_id`, or silently substituting another unit, would violate authority or desynchronize the existing UI. Recover/implement an explicit result agreement in the selected original client before enabling production. Current server keeps existing 400/422 error and atomic rollback behavior; original production-server failure payloads are unavailable.
+
+### Implemented and verified scope
+
+- `soul_mixer.py`: exact later-client base/result selection rule, server-owned randomness, parent exclusion, fallback and explicit rejection of absent timers/ranks or ambiguous tied ranking. This rule is **not wired into a live production endpoint** until authentic data and result synchronization exist. Synthetic unit fixtures are arithmetic tests, not game configuration.
+- `command.py`: Soul Mixer paid purchases validate existing temporary cost, actual XP level, town, grid bounds, occupied anchor and building count before mutation. Free/discounted client claims cannot bypass the price. Full terrain/footprint/expansion checks remain shared unfinished work; original free auto-placement is not restored without its missing threshold.
+- Input transfer into the configured zero-capacity/unranked mixer now rejects before deleting an army unit. Previously housed inputs can be returned once; missing contents, destructive removal, occupied destinations and active queues reject without mutation. Historical ID-only storage cannot recover attributes already lost by previous code.
+- `constants.py` records the five recovered command names without claiming queue implementation. Real production, power-ups and speed-up continue to reject rather than grant invented outcomes.
+- `tests/test_soul_mixer.py` covers formula boundaries (including inclusive RNG), same-type parents, exclusion/fallback, high-rank selection, missing data, invalid inputs, paid placement, insufficient gold/level, forged free/discount values, town/ownership checks, reload, failed-write rollback, missing/duplicate input withdrawal and active-queue locking. Existing unsupported production requests are checked for no debit/grant even on replay. These are safety tests, **not successful production/early-collection tests**.
+
+Validation: Python 3.14.0, `python -m unittest discover -s tests -v`: **38 tests passed in 9.485s**, including 13 Soul Mixer tests. Isolated log: `AUDIT/soul_mixer/regressions.log`.
+
+Remaining: recover original rank/timer/global tables and real building metadata; choose/pin a compatible client and reconcile server-owned selection; then implement the recovered queue lifecycle, paid rerolls, unlock/limit rules, atomic completion and exact original-input restoration. Actual open/select/start/restart/finish/collect gameplay cannot be certified with the current data. No browser playthrough or successful production restart was claimed. Preserve the existing assets and original saves.
 
 ## Complete building matrix
 

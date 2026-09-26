@@ -5,6 +5,7 @@ from get_game_config import get_game_config, get_level_from_xp, get_name_from_it
 from constants import Constant
 from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from database import record_pvp_battle
+import soul_mixer
 
 def get_strategy_type(id):
     if id == 8:
@@ -38,6 +39,8 @@ def do_command(USERID, cmd, args):
         print(" ".join(args))
 
     elif cmd == Constant.CMD_BUY:
+        if args and args[0] == soul_mixer.BUILDING_ID:
+            soul_mixer.validate_purchase(save, args, get_game_config())
         id = args[0]
         x = args[1]
         y = args[2]
@@ -155,6 +158,10 @@ def do_command(USERID, cmd, args):
         town_id = args[5]
         print("Push", str(get_name_from_item_id(unit_id)), "to", f"({b_x},{b_y}).")
         map = save["maps"][town_id]
+        if any(item[0] == soul_mixer.BUILDING_ID and item[1:3] == [b_x, b_y] for item in map['items']):
+            # The supplied config has no eligible input ranks and capacity zero.
+            # Do not let the generic transfer delete a player's unit anyway.
+            soul_mixer.reject_unrestored_mixing()
         # Unit into building
         for item in map["items"]:
             if item[1] == b_x and item[2] == b_y:
@@ -180,6 +187,9 @@ def do_command(USERID, cmd, args):
             unit_frame = args[6] # unknown use
         print("Pop", str(get_name_from_item_id(unit_id)), "from", f"({b_x},{b_y}).")
         map = save["maps"][town_id]
+        for building in map['items']:
+            if building[0] == soul_mixer.BUILDING_ID and building[1:3] == [b_x, b_y]:
+                soul_mixer.validate_withdrawal(save, building, args)
         # Remove unit from building
         for item in map["items"]:
             if item[1] == b_x and item[2] == b_y:
