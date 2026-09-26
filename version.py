@@ -1,4 +1,6 @@
 import random
+import copy
+from save_schema import validate_save
 
 from engine import timestamp_now
 
@@ -6,9 +8,22 @@ version_name = "alpha 0.04"
 version_code = "0.04a"
 
 def migrate_loaded_save(save: dict) -> bool:
+    if not isinstance(save, dict):
+        raise ValueError("Save must be an object")
+    if save.get('version') not in (None, '0.01a', '0.02a', '0.03a', version_code):
+        raise ValueError("Unsupported save version; original file preserved")
+    candidate = copy.deepcopy(save)
+    modified = _migrate(candidate)
+    validate_save(candidate)
+    save.clear()
+    save.update(candidate)
+    return modified
+
+
+def _migrate(save):
 
     # discard current version saves
-    if save["version"] == version_code:
+    if save.get("version") == version_code:
         return False
     
     # fix 0.01a saves

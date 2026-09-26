@@ -1,7 +1,7 @@
 print (" [+] Loading basics...")
 import os
 import json
-import urllib
+from pathlib import Path
 if os.name == 'nt':
     os.system("color")
     os.system("title Social Empires Server")
@@ -15,36 +15,64 @@ from database import (
     init_database,
     register_user,
     check_login,
-    set_userid,
     get_userid,
     get_received_pvp_battles,
     get_sent_pvp_battles,
     get_unseen_pvp_battles,
     mark_pvp_battles_seen,
-    get_username_by_userid
+    get_username_by_userid,
+    get_session_secret
 )
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
-from sessions import load_saved_villages, all_saves_userid, all_saves_info, save_info, new_village, fb_friends_str
+from sessions import load_saved_villages, all_saves_userid, save_info, new_village, fb_friends_str, neighbor_session, discard_new_village, state_lock
 load_saved_villages()
 
 print (" [+] Loading server...")
-from flask import Flask, render_template, send_from_directory, request, redirect, session
-from flask.debughelpers import attach_enctype_error_multidict
+from flask import Flask, render_template, send_from_directory, request, redirect, session, abort, g
 from command import command
 from engine import timestamp_now
 from version import version_name
 from constants import Constant
 from quests import get_quest_map
 from bundle import ASSETS_DIR, STUB_DIR, TEMPLATES_DIR, BASE_DIR
-from database import init_database, register_user, check_login, set_userid, get_userid
 
 host = '0.0.0.0'
-server_ip="192.168.8.4"
 port = 5050
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 init_database()
+app.secret_key = get_session_secret()
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax", MAX_CONTENT_LENGTH=2 * 1024 * 1024)
+
+GAME_PREFIX = "/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/"
+
+@app.before_request
+def require_player_ownership():
+    game_request = request.path.startswith(GAME_PREFIX)
+    api_request = request.path.startswith("/api/pvp/")
+    page_request = request.path in ("/play.html", "/ruffle.html")
+    if game_request or api_request or page_request or request.path in ('/', '/register', '/logout', '/new.html'):
+        state_lock.acquire()
+        g.state_lock_held = True
+    if not (game_request or api_request or page_request):
+        return
+    username = session.get("ACCOUNT_USERNAME")
+    userid = session.get("USERID")
+    if not username or not userid or get_userid(username) != userid or userid not in all_saves_userid():
+        session.clear()
+        return redirect("/") if page_request else ({"error": "Authentication required"}, 401)
+    if game_request:
+        # A client identity is a consistency check, never the source of authority.
+        for key in ("USERID", "user_id"):
+            if any(value != userid for value in request.values.getlist(key)):
+                return {"error": "Player identity does not match account"}, 403
+
+
+@app.teardown_request
+def release_state_lock(error=None):
+    if g.pop('state_lock_held', False):
+        state_lock.release()
 
 print (" [+] Configuring server routes...")
 
@@ -66,12 +94,10 @@ def login():
 
             userid = get_userid(username)
 
-            if userid is None:
+            if userid is None or userid not in all_saves_userid():
                 message = "This account has no empire."
             else:
-                # Reload saves so newly-created villages are available
-                load_saved_villages()
-
+                session.clear()
                 session["ACCOUNT_USERNAME"] = username
                 session["USERID"] = userid
                 session["GAMEVERSION"] = "SocialEmpires0926bsec.swf"
@@ -86,12 +112,10 @@ def login():
 
     return render_template("login.html", message=message)
 
-    saves_info = all_saves_info()
-    return render_template(
-        "login.html",
-        saves_info=saves_info,
-        version=version_name
-    )
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -105,13 +129,9 @@ def register():
         if not username or not password:
             message = "Username and password are required."
 
-        elif register_user(username, password):
-            userid = new_village()
-            set_userid(username, userid)
-
-            print("[REGISTER] Username:", username)
-            print("[REGISTER] New USERID:", userid)
-
+        elif len(username) > 80 or len(password) > 1024:
+            message = "Username or password is too long."
+        elif register_user(username, password, create_village=new_village, discard_village=discard_new_village):
             return redirect("/")
 
         else:
@@ -135,7 +155,7 @@ def play():
     GAMEVERSION = session['GAMEVERSION']
     print("[PLAY] USERID:", USERID)
     print("[PLAY] GAMEVERSION:", GAMEVERSION)
-    return render_template("play.html", save_info=save_info(USERID), serverTime=timestamp_now(), friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAMEVERSION, SERVERIP=server_ip)
+    return render_template("play.html", save_info=save_info(USERID), serverTime=timestamp_now(), friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAMEVERSION, SERVER_ORIGIN=request.host_url.rstrip('/'))
 @app.route("/api/pvp/unseen")
 def pvp_unseen():
     userid = session.get("USERID")
@@ -228,9 +248,7 @@ def pvp_history():
     }
 @app.route("/new.html")
 def new():
-    session['USERID'] = new_village()
-    session['GAMEVERSION'] = "SocialEmpires0926bsec.swf"
-    return redirect("play.html")
+    return redirect("/register")
 
 @app.route("/crossdomain.xml")
 def crossdomain():
@@ -261,33 +279,14 @@ def similar_05122012_dynamic():
 
 @app.route("/default01.static.socialpointgames.com/static/socialempires/<path:path>")
 def static_assets_loader(path):
-    # return send_from_directory(ASSETS_DIR, path)
-    if not os.path.exists(ASSETS_DIR + "/"+ path):
-        # File does not exists in provided assets
-        if not os.path.exists(f"{BASE_DIR}/download_assets/assets/{path}"):
-            # Download file from SP's CDN if it doesn't exist
-
-            # Make directory
-            directory = os.path.dirname(f"{BASE_DIR}/download_assets/assets/{path}")
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-
-            # Download File
-            URL = f"https://static.socialpointgames.com/static/socialempires/assets/{path}"
-            try:
-                response = urllib.request.urlretrieve(URL, f"{BASE_DIR}/download_assets/assets/{path}")
-            except urllib.error.HTTPError:
-                return ("", 404)
-
-            print(f"====== DOWNLOADED ASSET: {URL}")
-            return send_from_directory("{BASE_DIR}/download_assets/assets", path)
-        else:
-            # Use downloaded CDN asset
-            print(f"====== USING EXTERNAL: download_assets/assets/{path}")
-            return send_from_directory("{BASE_DIR}/download_assets/assets", path)
-    else:
-        # Use provided asset
-        return send_from_directory(ASSETS_DIR, path)
+    # Serve the archive or an existing cache. Missing files must not trigger
+    # unbounded network downloads or writes derived from a request path.
+    for directory in (ASSETS_DIR, os.path.join(BASE_DIR, "download_assets", "assets")):
+        root = Path(directory).resolve()
+        candidate = (root / path).resolve()
+        if candidate.is_relative_to(root) and candidate.is_file():
+            return send_from_directory(str(root), path)
+    abort(404)
 
 ## GAME DYNAMIC
 
@@ -316,19 +315,34 @@ def get_game_config_response():
 @app.route("/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/get_player_info.php", methods=['POST'])
 def get_player_info_response():
 
-    USERID = request.values['USERID']
+    USERID = session['USERID']
     user_key = request.values['user_key']
     spdebug = request.values['spdebug'] if 'spdebug' in request.values else None
     language = request.values['language']
     neighbors = request.values['neighbors'] if 'neighbors' in request.values else None
     client_id = request.values['client_id']
     user = request.values['user'] if 'user' in request.values else None
-    map = int(request.values['map']) if 'map' in request.values else None
+    try:
+        map = int(request.values.get('map', '0'))
+    except ValueError:
+        return {"error": "Invalid map"}, 400
+    if map < 0:
+        return {"error": "Invalid map"}, 400
+    # Real-player visits need a client-compatible public-state projection.
+    # Until that protocol is restored, never disclose another save's privateState.
+    if user in all_saves_userid() and user != USERID:
+        return {"error": "Player visits are not available yet"}, 403
+    if user and user != USERID and not user.startswith("100000"):
+        village = neighbor_session(user)
+        if village is None:
+            return {"error": "Unknown neighbor"}, 404
+        if map >= len(village['maps']):
+            return {"error": "Invalid map"}, 400
 
     print(f"get_player_info: USERID: {USERID}. user: {user} --", request.values)
 
     # Current Player
-    if user is None:
+    if user is None or user == USERID:
         return (get_player_info(USERID), 200)
     # Arthur
     elif user == Constant.NEIGHBOUR_ARTHUR_GUINEVERE_1 \
@@ -380,7 +394,7 @@ def flash_sync_error_response():
 def command_response():
     spdebug = None
 
-    USERID = request.values['USERID']
+    USERID = session['USERID']
     user_key = request.values['user_key']
     if 'spdebug' in request.values:
         spdebug = request.values['spdebug']
@@ -390,12 +404,29 @@ def command_response():
     print(f"command: USERID: {USERID}. --", request.values)
 
     data_str = request.values['data']
-    data_hash = data_str[:64]
-    assert data_str[64] == ';'
-    data_payload = data_str[65:]
-    data = json.loads(data_payload)
+    if len(data_str) < 66 or data_str[64] != ';':
+        return {"error": "Invalid command envelope"}, 400
+    try:
+        data = json.loads(data_str[65:])
+    except ValueError:
+        return {"error": "Invalid command JSON"}, 400
+    if not isinstance(data, dict) or not all(key in data for key in
+            ("ts", "first_number", "accessToken", "tries", "publishActions", "commands")):
+        return {"error": "Missing command fields"}, 400
+    if not isinstance(data['commands'], list) or len(data['commands']) > 200 or any(
+            not isinstance(c, dict) or not isinstance(c.get('cmd'), str) or not isinstance(c.get('args'), list)
+            for c in data['commands']):
+        return {"error": "Invalid commands"}, 400
 
-    command(USERID, data)
+    try:
+        command(USERID, data)
+    except NotImplementedError as error:
+        return {"result": "error", "error": str(error)}, 422
+    except (ValueError, TypeError, KeyError, IndexError) as error:
+        return {"result": "error", "error": "Invalid command arguments or state"}, 400
+    except OSError:
+        app.logger.exception("Could not persist command batch")
+        return {"result": "error", "error": "Save failed; batch was not applied"}, 503
     
     return ({"result": "success"}, 200)
 
@@ -433,5 +464,4 @@ def get_continent_ranking_response():
 print (" [+] Running server...")
 
 if __name__ == '__main__':
-    app.secret_key = 'SECRET_KEY'
     app.run(host=host, port=port, debug=False)

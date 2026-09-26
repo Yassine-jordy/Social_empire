@@ -11,39 +11,39 @@ The goal of this project is to preserve Social Empires while experimenting with 
 
 ## Current Status
 
-The game is currently playable locally through the Python/Flask server.
+Status reviewed against the code and isolated runtime tests on **26 September 2026**.
 
-### Working
+This is a partially restored server. Fresh account registration/login, account ownership checks and JSON save/reload across a server restart now work in isolated backend tests. The asset archive is configurable; this workspace points to the preserved original archive. Full gameplay and online multiplayer are not yet complete.
 
-- Social Empires game client
-- Python/Flask server
-- Local player saves
-- Ruffle support
-- Chrome / Edge / Firefox support
-- LAN access
-- Dynamic server address detection
-- Basic game commands
-- Villages and quests
-- Game configuration and patches
+### Implemented — removed from the remaining-work list
 
-### Planned
+- Flask server, configuration loading and existing patches.
+- UUID player creation, JSON save/load and basic persistence across reloads.
+- Ruffle integration and same-origin loader, SWF and API URLs.
+- Server binding to all network interfaces for LAN access.
+- Login/register pages, password hashing and parameterized SQLite account functions.
+- Versioned SQLite schema initialization, account-to-player linking, login and logout.
+- Persistent session secret for direct/WSGI launch, with an environment override.
+- Account ownership checks on game/PvP endpoints; private visits to other players are blocked pending a public-state protocol.
+- Absolute resource/data paths, configurable asset archive and safe existing-cache serving.
+- Atomic JSON save replacement and a local import command for compatible 0.04a UUID saves.
+- Regression tests for fresh/legacy databases, authorization, rollback, imports and restart recovery.
+- Transactional batches, core save validation, supported/versionless migrations, future-version rejection and pre-migration backups.
+- Final inventory gift fix; explicit rejection of unknown and unfinished commands, including both quest start and completion.
+- Static neighbours and enumeration/loading of other local player saves.
+- PvP battle insertion, sent/received history queries, seen flags and notification UI.
+- Generic item placement, movement and resource arithmetic.
 
-- Remote Internet play
-- Player accounts
-- Registration and login
-- SQLite database
-- Account-linked player saves
-- Multiple real players
-- Real player neighbours
-- Improved save management
-- Multiplayer features
-- Persistent PvP attacks
-- Better security
-- Server administration tools
-- Backups
-- Possible PostgreSQL migration
-- VPS deployment
-- HTTPS/domain support
+These are implemented components, not certification that their complete workflows work. PvP history still does not validate combat or update defenders; generic gameplay commands still trust client input after authentication. Abrupt process failure during account creation can leave an unlinked save; account/file recovery across such failures remains unfinished.
+
+### Confirmed blockers and defects
+
+- Resource collection and mission rewards remain replayable; costs and item ownership need authoritative validation.
+- Resurrection, quests, collectables, upgrades and unfinished commands are explicitly unsupported; PvP result submission is paused.
+- Save/schema guards protect persistence, but full backup restoration, cross-store crash recovery and multiple-worker safety remain incomplete.
+- Special-building progression, transfers, training and production still lack gameplay validation.
+
+Browser playthroughs, cross-device LAN access and full Chrome/Edge/Firefox compatibility were not verified in the latest audit. The remaining work below separates fixes to existing components from features that still need implementation.
 
 ---
 
@@ -53,70 +53,32 @@ The original Social Empires client is an Adobe Flash application.
 
 This project can run the Flash client using **Ruffle**, allowing the game to run inside modern web browsers without requiring Adobe Flash Player or a dedicated Flash browser.
 
-Supported/tested browsers include:
+Target browsers for compatibility testing include:
 
 - Google Chrome
 - Microsoft Edge
 - Mozilla Firefox
 
-Ruffle is loaded by the web client and executes the original SWF game.
+The web page loads Ruffle from an external, currently unpinned URL. The loader and game SWF must also be available locally; template integration alone does not establish full client compatibility.
 
 ---
 
 # Architecture
 
-The current architecture is approximately:
+The current architecture is:
 
 ```text
-Modern Browser
-      │
-      ▼
-    Ruffle
-      │
-      ▼
-Social Empires SWF
-      │
-      ▼
-Python / Flask Server
-      │
-      ├── Game commands
-      ├── Player information
-      ├── Villages
-      ├── Quests
-      ├── Configuration
-      └── Save data
+Browser / Ruffle / Social Empires SWF
+                  │
+                  ▼
+              Flask server
+                  ├── Account functions → SQLite users table
+                  ├── PvP history → SQLite battle tables
+                  ├── Game commands → in-memory players → JSON saves
+                  └── Configuration, assets and static quest maps
 ```
 
-The long-term goal is:
-
-```text
-                    Internet
-                       │
-                       ▼
-                 Web / Ruffle
-                       │
-                       ▼
-                Flask Application
-                       │
-            ┌──────────┴──────────┐
-            │                     │
-            ▼                     ▼
-     Authentication          Game Server
-            │                     │
-            ▼                     ▼
-         Accounts             Commands
-            │                     │
-            └──────────┬──────────┘
-                       ▼
-                    Database
-                       │
-             ┌─────────┴─────────┐
-             ▼                   ▼
-        Player Saves        Multiplayer
-                                 │
-                                 ▼
-                                PvP
-```
+Game state is still stored in JSON files. SQLite holds account links and battle history; it does not yet provide transactional gameplay persistence. The next architectural step is a transactional command/save boundary, followed by coordinated multiplayer state changes.
 
 ---
 
@@ -127,12 +89,11 @@ The long-term goal is:
 You need:
 
 - Windows or Linux
-- Python 3
-- pip
+- Python 3 and pip (the audit used Python 3.12.14)
 - A modern web browser
 - Required Social Empires game assets
 
-Install the Python dependencies:
+Run commands from the directory containing `server.py` (`Social_empire/` in the supplied workspace). Install the Python dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -142,7 +103,7 @@ pip install -r requirements.txt
 
 # Running the Server
 
-Start the server with:
+Resource paths resolve from the application directory, independently of the working directory. From the directory containing `server.py`, start it with:
 
 ```bash
 py server.py
@@ -164,39 +125,17 @@ The default server port is:
 
 # Playing Locally
 
-After starting the server, open:
+Open `http://127.0.0.1:5050/` for the account page. A successful login redirects to `/ruffle.html`; opening that page without a session redirects to login.
 
-```text
-http://127.0.0.1:5050/ruffle.html
-```
-
-in Chrome, Edge, Firefox, or another compatible modern browser.
+Register an account at `/register`, then log in. The database schema and session secret are initialized automatically. Configure the asset archive below before loading the game. The secret is stored in the private database unless `SOCIAL_EMPIRES_SECRET_KEY` overrides it; keep the database private and preserve it with the saves.
 
 ---
 
-# LAN Multiplayer / Remote Clients
+# LAN Access / Remote Clients
 
-The Flask server can listen on all network interfaces:
+The current server binds to `0.0.0.0:5050`. Another device can address it using the server computer's actual LAN IP, subject to network/firewall configuration. This provides network reachability; full multiplayer is still unfinished.
 
-```python
-host = "0.0.0.0"
-```
-
-This allows another device on the local network to connect to the server.
-
-For example, if the server computer has the local IP:
-
-```text
-192.168.8.4
-```
-
-another computer on the same network can open:
-
-```text
-http://192.168.8.4:5050/ruffle.html
-```
-
-The actual LAN IP will depend on the network.
+Game endpoints now enforce account ownership, but economy/combat validation and other P0 work remain. Keep development on a trusted local environment. Cross-device LAN/VPN testing remains on the checklist.
 
 ---
 
@@ -215,7 +154,7 @@ instead of hardcoding addresses such as:
 192.168.x.x
 ```
 
-This allows the same client to work when accessed through:
+This avoids hardcoded hostnames in Ruffle resource URLs for:
 
 - localhost
 - LAN
@@ -231,7 +170,7 @@ const base = window.location.origin;
 
 The SWF loader, static resources and dynamic API endpoints are then built using the current server origin.
 
-This also prevents problems caused by the browser loading the page from one origin while attempting to fetch Flash resources from another origin.
+This prevents the Ruffle page from mixing local and LAN origins for those resources. The legacy `/play.html` route now also derives resource URLs from the current request origin.
 
 ---
 
@@ -248,7 +187,34 @@ assets/
 default01.static.socialpointgames.com/
 ```
 
-The required game files must be placed in their expected directories before running the complete game.
+By default, the source server expects this layout beside server.py:
+
+```text
+Social_empire/
+├── server.py
+├── assets/
+│   ├── flash/SELoader.swf
+│   ├── flash/SocialEmpires0926bsec.swf
+│   ├── buildingsprites/
+│   ├── buildingthumbs/
+│   └── ...remaining asset directories...
+├── config/
+├── templates/
+└── villages/
+```
+
+In the supplied original release, the existing archive is under `social-emperors_0.04a/bundle/assets/`. Configure its location in an ignored `server.local.json` beside `server.py`; use `server.local.example.json` as a starting point:
+
+```json
+{
+  "assets_dir": "../../social-emperors_0.04a/bundle/assets",
+  "data_dir": "."
+}
+```
+
+This workspace already has that asset setting. Relative paths resolve from the application directory. `SOCIAL_EMPIRES_ASSETS_DIR` and `SOCIAL_EMPIRES_DATA_DIR` override the file. Defaults are bundled/app assets and the directory beside the source or executable, preserving the usual existing save/database locations. Config/templates resolve from the source or packaged bundle directory. The server serves existing cached assets, but no longer downloads missing assets in response to arbitrary requests; missing files return 404.
+
+The audit found 235 missing direct item asset references and two empty asset files in the original archive. Some references may need aliases or client-specific handling; investigate each before replacing or deleting content. Soul Mixer artwork is present in the original archive; its missing backend is a separate issue.
 
 ---
 
@@ -266,297 +232,80 @@ saves/
 .env
 ```
 
-This becomes especially important once accounts and databases are implemented.
+Account and battle functions already use `social_empires.db`; game state remains in `saves/*.save.json`. Keep both private. Existing original saves are not automatically linked to the new account UI. To import a compatible **0.04a save with a UUID player ID**, stop the server and create a new account from it using:
 
----
-
-# Development Roadmap
-
-## Phase 1 — Browser Modernization
-
-Status: **Working**
-
-Goals:
-
-- Run Social Empires without Adobe Flash Player
-- Integrate Ruffle
-- Support modern browsers
-- Fix browser resource loading
-- Avoid cross-origin problems
-- Dynamically determine the server URL
-
----
-
-## Phase 2 — Networking
-
-Goals:
-
-- LAN access
-- Multiple computers connecting to one server
-- Remote connections
-- VPN testing
-- Tailscale support
-- Prepare server for Internet deployment
-
-Basic LAN access is already working.
-
-A future remote setup could look like:
-
-```text
-Player A
-   │
-   │ Internet / VPN
-   ▼
-Social Empires Server
-   ▲
-   │
-   │ Internet / VPN
-   │
-Player B
+```bash
+python manage.py import-save "path/to/player.save.json" --username restored_player
 ```
 
----
-
-## Phase 3 — Player Accounts
-
-The current preservation server primarily works around local save data.
-
-The goal is to introduce proper accounts.
-
-Planned features:
-
-- Register
-- Login
-- Logout
-- Unique username
-- Password authentication
-- Player ID
-- Account creation date
-- Session management
-
-Passwords must never be stored as plain text.
-
-A secure password hashing implementation should be used.
+The command prompts for a new password, copies the save, preserves its ID and original file, and refuses an existing username, existing destination/player ID, incomplete save or unsupported version. Restart the server and log in. It does not overwrite an existing account's empire or automatically migrate older/unknown save schemas. Backups and full crash recovery are still required.
 
 ---
 
-## Phase 4 — Database
+# Remaining Development Work
 
-Initial database:
+Completed foundations are listed under Current Status. The checkboxes below contain only unfinished work. Preserve compatible saves, the existing asset archive and successful restoration code. Recover unknown mechanics from the client/configuration rather than inventing them.
 
-```text
-SQLite
+## First milestone — backend checks implemented
+
+Fresh-database registration, login/logout, authenticated state access, a saved map change and login after a separate-process restart are covered by automated tests. Existing account and battle rows survive schema initialization. A compatible legacy save can be copied and linked through the local import command. The original archive is configured for this workspace; full Ruffle gameplay remains to be verified.
+
+Save-safety implementation is verified; the next unfinished task is authoritative resource collection (owned producer, configured output, timer and atomic timestamp update), followed by remaining economy rules. See the [restoration roadmap](docs/restoration/NEXT_RESTORATION_ROADMAP.md#continuation-checkpoint--26-september-2026).
+
+Run isolated tests from this directory after installing requirements:
+
+```bash
+python -m unittest discover -s tests -v
 ```
 
-SQLite is suitable for the first multiplayer implementation because it is:
+Tests use disposable data directories, never real player saves. They do not certify all browser gameplay, combat or special systems.
 
-- simple
-- local
-- lightweight
-- easy to back up
-- integrated with Python
+## P0 — Critical fixes
 
-Possible future migration:
+- [ ] Complete per-command argument/state validation; envelope validation and explicit unsupported-command rejection are implemented.
+- [ ] Extend core save validation to verified special-system invariants; missing-version handling and unsupported-future-version rejection are implemented.
+- [ ] Verify backup restoration and retention; recover abrupt account-database/save-file interruptions. Migration backups, process-local serialization, atomic replacement and failed-batch rollback are implemented; multiple workers remain unsupported.
+- [ ] Restore resurrection from verified death records; it is currently rejected without consuming potions. Final-gift placement is fixed.
+- [ ] Reject unaffordable purchases, collection/sale of nonexistent items, invalid inventory transfers and repeated reward claims.
+- [ ] Implement validated, idempotent PvP with coordinated database/JSON persistence; result submission is currently disabled.
+- [ ] Render notification usernames as text and acknowledge only the battles actually displayed.
 
-```text
-SQLite
-   │
-   ▼
-PostgreSQL
-```
+## P1 — Core gameplay
 
-when the server requires more advanced concurrency or larger-scale deployment.
+- [ ] Capture baseline-client command traces and expected save changes for placement, collection, upgrades, training and inventory.
+- [ ] Enforce building ownership, placement bounds/collisions, level/quantity limits, costs and resource caps.
+- [ ] Implement authoritative production timers and collection timestamp updates for food, gold, wood and stone.
+- [ ] Implement configured upgrades for Town Hall, houses, barracks and other eligible buildings; preserve contained units and attributes.
+- [ ] Complete training costs, eligibility, queues/timers and capacity; validate both storage endpoints before mutation and preserve unit attributes to prevent loss/duplication.
+- [ ] Complete army/team management and population enforcement using observed client behavior.
+- [ ] Track mission eligibility/progress, enforce real skip costs and grant each reward once.
+- [ ] Restore quest start/result together with persisted attempt identity, once-only server-derived rewards, unit changes, timings and ranks. Both endpoints are currently rejected.
+- [ ] Resolve required missing quest maps, including the survival reference to `100000037`.
+- [ ] Fix maximum-XP level handling, deterministic patch ordering and ambiguous item lookups by functional category.
+- [ ] Resolve missing/empty assets and broken UI references; pass actual public neighbour data to Ruffle.
+- [ ] Pin reproducible runtime/Ruffle/build inputs and verify Chrome/Edge/Firefox plus LAN/VPN behavior with recorded versions.
+- [ ] Test core gameplay through save, server restart and continued play; update build/release instructions and development version labels.
 
----
+## P2 — Special systems
 
-## Phase 5 — Account-Linked Saves
+- [ ] Complete cemetery death registration, resurrection eligibility/payment and removal of the recovered death record.
+- [ ] Recover Soul Mixer requests, recipes, inputs/outputs, timing and saved state from the SWF/config/client traces, then implement the verified lifecycle. Do not guess recipes.
+- [ ] Enforce dragon/monster/rider server-owned prices, supported activation currencies, nest ownership, progression bounds, timing and one-time grants; reject negative prices and fix the `MonsterNumber`/`monsterNumber` inconsistency.
+- [ ] Recover and implement magic/mana, bosses, survival, collections, forge and event-building protocols individually.
+- [ ] Verify each supported special system through restart, cancellation/failure and replay cases; explicitly label unsupported client-version features.
 
-Each account should eventually own its own Social Empires save.
+## P3 — Online features and deployment
 
-Conceptually:
+- [ ] Add account recovery, administrative roles/tools, session controls and abuse/rate limits.
+- [ ] Establish persistence and concurrency guarantees for multiple players/workers before enabling shared-state interactions.
+- [ ] Complete safe public player views, friendships, discovery and authenticated visits beyond local-save enumeration.
+- [ ] Replace ranking stubs with rankings derived from validated state; implement clans and membership roles.
+- [ ] Complete PvP attack-start authorization, battle identity, result validation, cooldowns and atomic attacker/defender effects.
+- [ ] Complete per-battle notifications and battle-history behavior; history storage itself already exists.
+- [ ] Add production WSGI configuration, HTTPS/domain support, monitoring, restart management and backup restoration drills.
+- [ ] Validate staged LAN/VPN and remote deployment after P0 fixes; assess PostgreSQL only if measured persistence/concurrency needs justify it.
 
-```text
-Account
-   │
-   ├── User ID
-   ├── Username
-   ├── Password hash
-   │
-   └── Player Save
-          │
-          ├── Level
-          ├── Gold
-          ├── Cash
-          ├── Units
-          ├── Buildings
-          ├── Missions
-          └── Progress
-```
-
-Logging into an account should automatically load the corresponding empire.
-
----
-
-## Phase 6 — Real Player Neighbours
-
-The original preservation project contains predefined/static village information.
-
-The goal is to allow real server players to appear as neighbours.
-
-Instead of:
-
-```text
-Player
-  │
-  └── Static NPC village
-```
-
-the system should eventually support:
-
-```text
-Player A
-   │
-   └── Neighbour
-          │
-          ▼
-       Player B
-          │
-          ▼
-    Player B's real save
-```
-
-This requires resolving player IDs and retrieving the appropriate player save from the server/database.
-
----
-
-## Phase 7 — Multiplayer
-
-Once accounts and player saves are separated correctly, multiplayer features can be developed.
-
-Potential features:
-
-- player discovery
-- neighbours
-- visiting other empires
-- friend lists
-- player information
-- synchronized player state
-- interactions between players
-
----
-
-## Phase 8 — PvP Persistence
-
-The original Flash client contains functionality related to attacking other players.
-
-The current server implementation does not yet fully persist PvP attack results.
-
-The goal is to investigate and implement server-side handling for commands related to player attacks.
-
-Potential flow:
-
-```text
-Player A attacks Player B
-          │
-          ▼
-     Flash Client
-          │
-          ▼
-      Flask Server
-          │
-          ▼
-   Validate Attack
-          │
-          ▼
-   Process Results
-          │
-          ├── Player A changes
-          │
-          └── Player B changes
-          │
-          ▼
-       Database
-```
-
-Important areas to investigate include attack-start and attack-end requests sent by the Flash client.
-
-PvP logic should be validated by the server rather than trusting arbitrary client data.
-
----
-
-## Phase 9 — Security
-
-Before exposing the server publicly, additional security work will be necessary.
-
-This includes:
-
-- secure password hashing
-- input validation
-- session security
-- authorization
-- database validation
-- rate limiting where appropriate
-- protection against malformed game commands
-- secret configuration through environment variables
-- preventing users from modifying another player's save
-- server-side validation of multiplayer actions
-
----
-
-## Phase 10 — Backups
-
-Player data should be backed up automatically.
-
-Possible strategy:
-
-```text
-Database
-   │
-   ├── Current database
-   │
-   ├── Daily backup
-   │
-   └── Older backups
-```
-
-Backups become increasingly important once multiple people have persistent empires.
-
----
-
-## Phase 11 — Deployment
-
-A later version could run on a dedicated server or VPS.
-
-Example:
-
-```text
-Players
-   │
-   ▼
-Internet
-   │
-   ▼
-HTTPS / Domain
-   │
-   ▼
-Reverse Proxy
-   │
-   ▼
-Flask Application
-   │
-   ▼
-PostgreSQL
-```
-
-Possible future additions:
-
-- domain name
-- HTTPS
-- reverse proxy
-- production WSGI server
-- monitoring
-- automatic restart
-- server logs
+The comparison audit covers all supplied files, 1,010 building/scenery records and 156 command declarations. It does not certify every SWF, browser or special-system UI. Detailed reports are stored in the local workspace's sibling `AUDIT/` directory and are not part of this source repository.
 
 ---
 

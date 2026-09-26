@@ -3,6 +3,12 @@ import os
 import copy
 import uuid
 import random
+import tempfile
+import hashlib
+from contextlib import contextmanager
+from contextvars import ContextVar
+from threading import RLock
+from save_schema import validate_save
 from flask import session
 # from flask_session import SqlAlchemySessionInterface, current_app
 
@@ -24,6 +30,26 @@ __villages = {}  # ALL static neighbors
 }'''
 
 __saves = {}  # ALL saved villages
+state_lock = RLock()
+_staged = ContextVar('staged_save', default=None)
+
+
+@contextmanager
+def save_transaction(USERID):
+    """Serialize batches in this process; publish only after durable file replacement."""
+    with state_lock:
+        original = session(USERID)
+        if original is None:
+            raise ValueError('Unknown player')
+        candidate = copy.deepcopy(original)
+        token = _staged.set((USERID, candidate))
+        try:
+            yield candidate
+            validate_save(candidate)
+            save_session(USERID)
+            __saves[USERID] = candidate
+        finally:
+            _staged.reset(token)
 '''__saves = {
     "USERID_1": {
         "playerInfo": {...},
@@ -33,7 +59,8 @@ __saves = {}  # ALL saved villages
     "USERID_2": {...}
 }'''
 
-__initial_village = json.load(open(os.path.join(VILLAGES_DIR, "initial.json")))
+with open(os.path.join(VILLAGES_DIR, "initial.json"), encoding="utf-8") as initial_file:
+    __initial_village = json.load(initial_file)
 
 # Load saved villages
 
@@ -59,7 +86,8 @@ def load_saved_villages():
         if file == "initial.json" or not file.endswith(".json"):
             continue
         print(f" * Loading static neighbour {file}... ", end='')
-        village = json.load(open(os.path.join(VILLAGES_DIR, file)))
+        with open(os.path.join(VILLAGES_DIR, file), encoding="utf-8") as village_file:
+            village = json.load(village_file)
         if not is_valid_village(village):
             print("Invalid neighbour")
             continue
@@ -69,30 +97,33 @@ def load_saved_villages():
         else:
             __villages[str(USERID)] = village
             print("Ok.")
-    # Saves in /saves
-    for file in os.listdir(SAVES_DIR):
-        if not file.endswith(".save.json"):
+    # Invalid or unsupported files stay untouched and do not stop other players loading.
+    for file in sorted(os.listdir(SAVES_DIR)):
+        if not file.endswith('.save.json'):
             continue
-        print(f" * Loading save at {file}... ", end='')
+        filename = os.path.join(SAVES_DIR, file)
         try:
-            save = json.load(open(os.path.join(SAVES_DIR, file)))
-        except json.decoder.JSONDecodeError as e:
-            print("Corrupted JSON.")
-            continue
-        if not is_valid_village(save):
-            print("Invalid Save.")
-            continue
-        USERID = save["playerInfo"]["pid"]
-        try:
-            map_name = save["playerInfo"]["map_names"][ save["playerInfo"]["default_map"] ]
-        except:
-            map_name = '?'
-        print(f"({map_name}) Ok.")
-        __saves[str(USERID)] = save
-        modified = migrate_loaded_save(save) # check save version for migration
-        if modified:
-            save_session(USERID)
-    
+            with open(filename, encoding='utf-8') as f:
+                save = json.load(f)
+            modified = migrate_loaded_save(save)
+            USERID = str(save['playerInfo']['pid'])
+            if file != USERID + '.save.json':
+                raise ValueError('Filename does not match player ID')
+            if USERID in __saves or USERID in __villages:
+                raise ValueError('Duplicate player ID')
+            if modified:
+                backup_file(filename)
+            __saves[USERID] = save
+            if modified:
+                try:
+                    save_session(USERID)
+                except Exception:
+                    __saves.pop(USERID, None)
+                    raise
+            print(f' * Loaded save {file}')
+        except (ValueError, KeyError, TypeError, IndexError, OSError) as error:
+            print(f' * Skipped save {file}: {error}')
+
 
 # New village
 
@@ -110,11 +141,51 @@ def new_village() -> str:
     # Memory saves
     __saves[USERID] = village
     # Generate save file
-    save_session(USERID)
+    try:
+        save_session(USERID)
+    except Exception:
+        __saves.pop(USERID, None)
+        raise
     print("Done.")
     return USERID
 
 # Access functions
+
+def discard_new_village(USERID):
+    """Rollback only a village just allocated by account registration."""
+    if str(uuid.UUID(USERID)) != USERID:
+        raise ValueError("Invalid new village ID")
+    filename = os.path.join(SAVES_DIR, USERID + '.save.json')
+    if os.path.exists(filename):
+        os.unlink(filename)
+    __saves.pop(USERID, None)
+
+
+def import_village(filename):
+    """Copy a compatible legacy save into this server without changing its source."""
+    with open(filename, encoding='utf-8') as f:
+        village = json.load(f)
+    if not is_valid_village(village) or village.get('version') != version_code:
+        raise ValueError("Import requires a valid 0.04a save; migrate older saves separately")
+    # Import must be usable by current routes, not merely pass the historic validator.
+    for section in ('playerInfo', 'privateState'):
+        if not isinstance(village[section], dict) or not set(__initial_village[section]).issubset(village[section]):
+            raise ValueError("Incomplete save section: " + section)
+    if not village['maps'] or any(not set(__initial_village['maps'][0]).difference({'__#__ITEMS_hint'}).issubset(m) for m in village['maps']):
+        raise ValueError("Incomplete save maps")
+    USERID = village['playerInfo']['pid']
+    if not isinstance(USERID, str) or str(uuid.UUID(USERID)) != USERID:
+        raise ValueError("Import requires a canonical UUID player identity")
+    if USERID in all_userid() or os.path.exists(os.path.join(SAVES_DIR, USERID+'.save.json')):
+        raise ValueError("That player identity already exists; refusing to overwrite")
+    __saves[USERID] = village
+    try:
+        save_info(USERID)
+        save_session(USERID)
+    except Exception:
+        __saves.pop(USERID, None)
+        raise
+    return USERID
 
 def all_saves_userid() -> list:
     "Returns a list of the USERID of every saved village."
@@ -140,6 +211,9 @@ def all_saves_info() -> list:
 
 def session(USERID: str) -> dict:
     assert(isinstance(USERID, str))
+    staged = _staged.get()
+    if staged is not None and staged[0] == USERID:
+        return staged[1]
     return __saves[USERID] if USERID in __saves else None
 
 def neighbor_session(USERID: str) -> dict:
@@ -188,7 +262,7 @@ def neighbors(USERID: str) -> list:
         or vill["playerInfo"]["pid"] == Constant.NEIGHBOUR_ARTHUR_GUINEVERE_2 \
         or vill["playerInfo"]["pid"] == Constant.NEIGHBOUR_ARTHUR_GUINEVERE_3:
             continue
-        neigh = vill["playerInfo"]
+        neigh = dict(vill["playerInfo"])
         neigh["coins"] = vill["maps"][0]["coins"]
         neigh["xp"] = vill["maps"][0]["xp"]
         neigh["level"] = vill["maps"][0]["level"]
@@ -202,14 +276,10 @@ def neighbors(USERID: str) -> list:
         vill = __saves[key]
         if vill["playerInfo"]["pid"] == USERID:
             continue
-        neigh = vill["playerInfo"]
-        neigh["coins"] = vill["maps"][0]["coins"]
+        # Expose a directory entry, never another account's private player fields.
+        neigh = {field: vill["playerInfo"][field] for field in ("pid", "name", "pic")}
         neigh["xp"] = vill["maps"][0]["xp"]
         neigh["level"] = vill["maps"][0]["level"]
-        neigh["stone"] = vill["maps"][0]["stone"]
-        neigh["wood"] = vill["maps"][0]["wood"]
-        neigh["food"] = vill["maps"][0]["food"]
-        neigh["stone"] = vill["maps"][0]["stone"]
         neighbors += [neigh]
     return neighbors
 
@@ -217,32 +287,54 @@ def neighbors(USERID: str) -> list:
 # The reason why this was implemented is to warn the user if a save game from Social Wars was used by accident
 
 def is_valid_village(save: dict):
-    if "playerInfo" not in save or "maps" not in save or "privateState" not in save:
-        # These are obvious
+    try:
+        validate_save(save)
+        return True
+    except (ValueError, TypeError, KeyError):
         return False
-    for map in save["maps"]:
-        if "oil" in map or "steel" in map:
-            return False
-        if "stone" not in map or "food" not in map:
-            return False
-        if "items" not in map:
-            return False
-        if type(map["items"]) != list:
-            return False
-
-    return True
 
 # Persistency
 
 def backup_session(USERID: str):
-    # TODO 
-    return
+    return backup_file(os.path.join(SAVES_DIR, USERID + '.save.json'))
+
+
+def backup_file(filename):
+    """Keep exact pre-migration bytes once per content hash; never overwrite a backup."""
+    with open(filename, 'rb') as source:
+        content = source.read()
+    digest = hashlib.sha256(content).hexdigest()
+    directory = os.path.join(SAVES_DIR, 'backups')
+    os.makedirs(directory, exist_ok=True)
+    target = os.path.join(directory, os.path.basename(filename) + '.' + digest + '.bak')
+    try:
+        with open(target, 'xb') as output:
+            output.write(content)
+            output.flush()
+            os.fsync(output.fileno())
+    except FileExistsError:
+        with open(target, 'rb') as existing:
+            if existing.read() != content:
+                raise OSError('Existing migration backup is incomplete')
+    return target
 
 def save_session(USERID: str):
     # TODO 
     file = f"{USERID}.save.json"
     print(f" * Saving village at {file}... ", end='')
     village = session(USERID)
-    with open(os.path.join(SAVES_DIR, file), 'w') as f:
-        json.dump(village, f, indent=4)
+    validate_save(village)
+    if not USERID or os.path.basename(USERID) != USERID or any(c in USERID for c in '/\\:'):
+        raise ValueError("Invalid save identity")
+    os.makedirs(SAVES_DIR, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".save-", suffix=".tmp", dir=SAVES_DIR)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(village, f, indent=4)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, os.path.join(SAVES_DIR, file))
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
     print("Done.")
