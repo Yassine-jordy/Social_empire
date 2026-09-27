@@ -37,6 +37,15 @@ class SaveSafetyTests(unittest.TestCase):
     def snapshot(self):
         return copy.deepcopy(sessions.session(self.uid)), self.path.read_bytes()
 
+    def test_observed_onboarding_batch_size_and_upper_bound(self):
+        # The real client initializes 390 objects in one packet. Exercise a
+        # packet of that size without depending on unrelated object handlers.
+        commands = [('name_map', [0, 'Initialized'])] * 390
+        self.assertEqual(self.post(commands).status_code, 200)
+        before = self.snapshot()
+        self.assertEqual(self.post(commands + [('name_map', [0, 'Overflow'])] * 123).status_code, 400)
+        self.assertEqual(self.snapshot(), before)
+
     def test_late_invalid_arguments_roll_back_memory_and_disk(self):
         before=self.snapshot()
         response=self.post([('name_map',[0,'Must roll back']),('move',[])])

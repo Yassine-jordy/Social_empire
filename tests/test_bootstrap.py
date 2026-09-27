@@ -94,6 +94,22 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(client.get('/new.html').location, '/register')
         self.assertEqual(len(sessions.all_saves_userid()), count)
 
+    def test_optional_client_is_allowlisted_and_session_scoped(self):
+        client, uid = self.account('client-version')
+        other, _ = self.account('client-version-other')
+        self.assertEqual(client.get('/ruffle.html?client=../secret').status_code, 400)
+        self.assertEqual(client.get('/ruffle.html?client=1.2.7').status_code, 404)
+        with patch.object(server.Path, 'is_file', return_value=True):
+            response = client.get('/ruffle.html?client=1.2.7')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'SocialEmpires1.2.7sec.swf', response.data)
+        with client.session_transaction() as state:
+            self.assertEqual(state['GAMEVERSION'], 'SocialEmpires1.2.7sec.swf')
+        with other.session_transaction() as state:
+            self.assertEqual(state['GAMEVERSION'], 'SocialEmpires0926bsec.swf')
+        client.get('/logout')
+        self.assertEqual(client.get('/ruffle.html?client=1.2.7').status_code, 302)
+
     def test_assets_cache_and_path_traversal(self):
         client = server.app.test_client(); prefix='/default01.static.socialpointgames.com/static/socialempires/'
         with client.get(prefix+'flash/SELoader.swf') as response:

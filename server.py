@@ -210,6 +210,18 @@ def ruffle():
 
     if session['USERID'] not in all_saves_userid():
         return redirect("/")
+
+    # Explicit per-session compatibility test; keep the normal login default.
+    # 0.9.26b has no Soul Mixer panel. Never treat a query value as a file path.
+    if 'client' in request.args:
+        clients = {'0.9.26b': 'SocialEmpires0926bsec.swf',
+                   '1.2.7': 'SocialEmpires1.2.7sec.swf'}
+        selected = clients.get(request.args['client'])
+        if selected is None:
+            return {"error": "Unsupported client version"}, 400
+        if not (Path(ASSETS_DIR) / 'flash' / selected).is_file():
+            return {"error": "Selected client is missing from the asset archive"}, 404
+        session['GAMEVERSION'] = selected
     
     USERID = session['USERID']
     GAMEVERSION = session['GAMEVERSION']
@@ -413,7 +425,9 @@ def command_response():
     if not isinstance(data, dict) or not all(key in data for key in
             ("ts", "first_number", "accessToken", "tries", "publishActions", "commands")):
         return {"error": "Missing command fields"}, 400
-    if not isinstance(data['commands'], list) or len(data['commands']) > 200 or any(
+    # The bundled 0.9.26b client sends 390 commands while populating a fresh map.
+    # Keep a bound, but allow that observed legitimate initialization packet.
+    if not isinstance(data['commands'], list) or len(data['commands']) > 512 or any(
             not isinstance(c, dict) or not isinstance(c.get('cmd'), str) or not isinstance(c.get('args'), list)
             for c in data['commands']):
         return {"error": "Invalid commands"}, 400

@@ -26,7 +26,15 @@ All 1010 effective type=b records are inventoried below and in [BUILDING_AUDIT.c
 
 ## Soul Mixer — dedicated analysis
 
-Updated 26 September 2026. **Status: Partial — original client logic recovered; full mixing remains blocked by missing original data and authoritative client synchronization.** No substitute recipes or timers were installed.
+Updated 28 September 2026. **Status: Partial — original client panel/window now reached in Ruffle; full mixing remains blocked by missing original data and authoritative client synchronization.** No substitute recipes or timers were installed.
+
+### Actual-client UI continuation
+
+- Root cause of the generic panel: the default 0.9.26b client has no Soul Mixer popup/handler. In preserved 1.2.7, `GUI.RecuadroInfoNew` selects `EP_SelfSoulMixer`, whose action opens `PopupSoulMixer` with the selected building. Added authenticated, allowlisted, per-session `/ruffle.html?client=1.2.7`; ordinary logins retain the existing default. No SWF was modified or redistributed.
+- Actual Ruffle test with existing `momo123`: level 80 loaded without the tutorial; placed building 1529 at (53,57), charged the existing temporary 2,000-gold price; selected the correct named Soul Mixer panel, clicked ENTER and opened the original illustrated window. Clicking the left input button opened the original unit selector. **Selector is empty; no successful mix or output persistence is claimed.** Cash remained 5,000; gold became 8,000 after placement, other resources remained 10,000.
+- Blank popup labels are independently explained by `core.Language`: Soul Mixer uses literal IDs 1615–1629; the two English preserved configs end at 1505 and the 4399 config at 1540. None includes those IDs/names. The background, two slots and selector render; authentic text and eligible unit data are absent. Do not report the window as fully restored.
+- The observed original-client initialization packet has 390 commands, exceeding the previous limit of 200. Raised the bounded limit to 512; added acceptance/overflow rollback coverage and client-selection isolation/path rejection coverage. **40 tests passed in 11.843s**, log `AUDIT/soul_mixer/ui-regressions.log`. This does not substitute for missing end-to-end production tests.
+- Mixing, premium use, resulting-unit collection/replay and result reload remain blocked. Existing rejection/rollback safeguards remain in effect. Next: recover original Soul Mixer localization and balance metadata, then implement server-result agreement in the client before enabling queues/premium commands. Local server remains running with the disposable UAT data directory.
 
 ### Evidence and client versions
 
