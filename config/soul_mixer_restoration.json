@@ -1,0 +1,1904 @@
+{
+  "provenance": {
+    "repository": "https://github.com/AcidCaos/socialemperors",
+    "commit": "880cde18b3fc233ab7a3914e95b81e9297aeaa64",
+    "origin_commit": "e8562a6cef35b59e95862d732ead0e342a231561",
+    "status": "Upstream reconstruction; not recovered Social Point production balance"
+  },
+  "excluded_unit_ids": [
+    503,
+    523,
+    524,
+    542,
+    543,
+    545,
+    561,
+    562,
+    564,
+    617,
+    657,
+    658,
+    671,
+    728,
+    739,
+    1254,
+    1282,
+    2003,
+    2004,
+    2012,
+    2032,
+    2033,
+    2034,
+    2051,
+    2083,
+    2088,
+    2097,
+    2104,
+    2110,
+    2119,
+    2124,
+    2147,
+    2154,
+    2165,
+    1532,
+    2112,
+    2120,
+    2111
+  ],
+  "units": {
+    "502": {
+      "breeding_order": 14,
+      "sm_training_time": 10000
+    },
+    "507": {
+      "breeding_order": 36,
+      "sm_training_time": 10000
+    },
+    "508": {
+      "breeding_order": 53,
+      "sm_training_time": 10000
+    },
+    "509": {
+      "breeding_order": 12,
+      "sm_training_time": 10000
+    },
+    "510": {
+      "breeding_order": 18,
+      "sm_training_time": 10000
+    },
+    "511": {
+      "breeding_order": 23,
+      "sm_training_time": 10000
+    },
+    "512": {
+      "breeding_order": 19,
+      "sm_training_time": 10000
+    },
+    "513": {
+      "breeding_order": 28,
+      "sm_training_time": 10000
+    },
+    "514": {
+      "breeding_order": 43,
+      "sm_training_time": 10000
+    },
+    "515": {
+      "breeding_order": 22,
+      "sm_training_time": 10000
+    },
+    "516": {
+      "breeding_order": 10,
+      "sm_training_time": 10000
+    },
+    "517": {
+      "breeding_order": 11,
+      "sm_training_time": 10000
+    },
+    "518": {
+      "breeding_order": 13,
+      "sm_training_time": 10000
+    },
+    "532": {
+      "breeding_order": 16,
+      "sm_training_time": 10000
+    },
+    "533": {
+      "breeding_order": 71,
+      "sm_training_time": 20000
+    },
+    "534": {
+      "breeding_order": 86,
+      "sm_training_time": 20000
+    },
+    "535": {
+      "breeding_order": 25,
+      "sm_training_time": 10000
+    },
+    "536": {
+      "breeding_order": 88,
+      "sm_training_time": 16000
+    },
+    "539": {
+      "breeding_order": 57,
+      "sm_training_time": 11000
+    },
+    "540": {
+      "breeding_order": 30,
+      "sm_training_time": 10000
+    },
+    "541": {
+      "breeding_order": 72,
+      "sm_training_time": 15000
+    },
+    "546": {
+      "breeding_order": 15,
+      "sm_training_time": 10000
+    },
+    "550": {
+      "breeding_order": 84,
+      "sm_training_time": 23000
+    },
+    "551": {
+      "breeding_order": 27,
+      "sm_training_time": 10000
+    },
+    "552": {
+      "breeding_order": 70,
+      "sm_training_time": 13000
+    },
+    "553": {
+      "breeding_order": 85,
+      "sm_training_time": 23000
+    },
+    "554": {
+      "breeding_order": 117,
+      "sm_training_time": 26000
+    },
+    "555": {
+      "breeding_order": 134,
+      "sm_training_time": 30000
+    },
+    "556": {
+      "breeding_order": 149,
+      "sm_training_time": 33000
+    },
+    "557": {
+      "breeding_order": 93,
+      "sm_training_time": 25000
+    },
+    "560": {
+      "breeding_order": 89,
+      "sm_training_time": 20000
+    },
+    "563": {
+      "breeding_order": 38,
+      "sm_training_time": 10000
+    },
+    "565": {
+      "breeding_order": 94,
+      "sm_training_time": 25000
+    },
+    "569": {
+      "breeding_order": 17,
+      "sm_training_time": 10000
+    },
+    "570": {
+      "breeding_order": 55,
+      "sm_training_time": 10000
+    },
+    "572": {
+      "breeding_order": 20,
+      "sm_training_time": 10000
+    },
+    "573": {
+      "breeding_order": 29,
+      "sm_training_time": 10000
+    },
+    "574": {
+      "breeding_order": 32,
+      "sm_training_time": 12000
+    },
+    "576": {
+      "breeding_order": 37,
+      "sm_training_time": 10000
+    },
+    "577": {
+      "breeding_order": 21,
+      "sm_training_time": 10000
+    },
+    "578": {
+      "breeding_order": 67,
+      "sm_training_time": 13000
+    },
+    "603": {
+      "breeding_order": 150,
+      "sm_training_time": 33000
+    },
+    "606": {
+      "breeding_order": 78,
+      "sm_training_time": 15000
+    },
+    "607": {
+      "breeding_order": 51,
+      "sm_training_time": 16000
+    },
+    "608": {
+      "breeding_order": 76,
+      "sm_training_time": 15000
+    },
+    "609": {
+      "breeding_order": 39,
+      "sm_training_time": 13000
+    },
+    "610": {
+      "breeding_order": 91,
+      "sm_training_time": 20000
+    },
+    "611": {
+      "breeding_order": 33,
+      "sm_training_time": 12000
+    },
+    "612": {
+      "breeding_order": 82,
+      "sm_training_time": 16000
+    },
+    "613": {
+      "breeding_order": 74,
+      "sm_training_time": 16000
+    },
+    "614": {
+      "breeding_order": 97,
+      "sm_training_time": 22000
+    },
+    "615": {
+      "breeding_order": 132,
+      "sm_training_time": 33000
+    },
+    "616": {
+      "breeding_order": 31,
+      "sm_training_time": 10000
+    },
+    "618": {
+      "breeding_order": 92,
+      "sm_training_time": 21000
+    },
+    "619": {
+      "breeding_order": 61,
+      "sm_training_time": 13000
+    },
+    "620": {
+      "breeding_order": 26,
+      "sm_training_time": 10000
+    },
+    "621": {
+      "breeding_order": 83,
+      "sm_training_time": 16000
+    },
+    "622": {
+      "breeding_order": 45,
+      "sm_training_time": 15000
+    },
+    "623": {
+      "breeding_order": 133,
+      "sm_training_time": 33000
+    },
+    "626": {
+      "breeding_order": 65,
+      "sm_training_time": 14000
+    },
+    "627": {
+      "breeding_order": 35,
+      "sm_training_time": 10000
+    },
+    "628": {
+      "breeding_order": 50,
+      "sm_training_time": 12000
+    },
+    "629": {
+      "breeding_order": 109,
+      "sm_training_time": 23000
+    },
+    "630": {
+      "breeding_order": 182,
+      "sm_training_time": 66000
+    },
+    "632": {
+      "breeding_order": 87,
+      "sm_training_time": 18000
+    },
+    "633": {
+      "breeding_order": 41,
+      "sm_training_time": 12000
+    },
+    "635": {
+      "breeding_order": 174,
+      "sm_training_time": 53000
+    },
+    "636": {
+      "breeding_order": 58,
+      "sm_training_time": 13000
+    },
+    "637": {
+      "breeding_order": 183,
+      "sm_training_time": 83000
+    },
+    "638": {
+      "breeding_order": 68,
+      "sm_training_time": 16000
+    },
+    "640": {
+      "breeding_order": 75,
+      "sm_training_time": 16000
+    },
+    "641": {
+      "breeding_order": 201,
+      "sm_training_time": 83000
+    },
+    "642": {
+      "breeding_order": 202,
+      "sm_training_time": 83000
+    },
+    "643": {
+      "breeding_order": 160,
+      "sm_training_time": 38000
+    },
+    "644": {
+      "breeding_order": 126,
+      "sm_training_time": 25000
+    },
+    "645": {
+      "breeding_order": 115,
+      "sm_training_time": 24000
+    },
+    "646": {
+      "breeding_order": 40,
+      "sm_training_time": 11000
+    },
+    "647": {
+      "breeding_order": 138,
+      "sm_training_time": 28000
+    },
+    "648": {
+      "breeding_order": 123,
+      "sm_training_time": 24000
+    },
+    "649": {
+      "breeding_order": 275,
+      "sm_training_time": 106000
+    },
+    "650": {
+      "breeding_order": 258,
+      "sm_training_time": 116000
+    },
+    "651": {
+      "breeding_order": 98,
+      "sm_training_time": 23000
+    },
+    "652": {
+      "breeding_order": 101,
+      "sm_training_time": 25000
+    },
+    "653": {
+      "breeding_order": 192,
+      "sm_training_time": 66000
+    },
+    "654": {
+      "breeding_order": 205,
+      "sm_training_time": 60000
+    },
+    "655": {
+      "breeding_order": 135,
+      "sm_training_time": 28000
+    },
+    "659": {
+      "breeding_order": 46,
+      "sm_training_time": 10000
+    },
+    "660": {
+      "breeding_order": 186,
+      "sm_training_time": 50000
+    },
+    "661": {
+      "breeding_order": 194,
+      "sm_training_time": 51000
+    },
+    "662": {
+      "breeding_order": 130,
+      "sm_training_time": 25000
+    },
+    "663": {
+      "breeding_order": 140,
+      "sm_training_time": 30000
+    },
+    "683": {
+      "breeding_order": 79,
+      "sm_training_time": 26000
+    },
+    "684": {
+      "breeding_order": 292,
+      "sm_training_time": 110000
+    },
+    "687": {
+      "breeding_order": 99,
+      "sm_training_time": 23000
+    },
+    "694": {
+      "breeding_order": 169,
+      "sm_training_time": 46000
+    },
+    "695": {
+      "breeding_order": 297,
+      "sm_training_time": 113000
+    },
+    "698": {
+      "breeding_order": 105,
+      "sm_training_time": 26000
+    },
+    "699": {
+      "breeding_order": 124,
+      "sm_training_time": 26000
+    },
+    "700": {
+      "breeding_order": 148,
+      "sm_training_time": 31000
+    },
+    "701": {
+      "breeding_order": 100,
+      "sm_training_time": 23000
+    },
+    "702": {
+      "breeding_order": 153,
+      "sm_training_time": 33000
+    },
+    "703": {
+      "breeding_order": 42,
+      "sm_training_time": 12000
+    },
+    "704": {
+      "breeding_order": 127,
+      "sm_training_time": 25000
+    },
+    "705": {
+      "breeding_order": 110,
+      "sm_training_time": 25000
+    },
+    "706": {
+      "breeding_order": 96,
+      "sm_training_time": 28000
+    },
+    "707": {
+      "breeding_order": 254,
+      "sm_training_time": 100000
+    },
+    "708": {
+      "breeding_order": 323,
+      "sm_training_time": 120000
+    },
+    "709": {
+      "breeding_order": 209,
+      "sm_training_time": 80000
+    },
+    "710": {
+      "breeding_order": 113,
+      "sm_training_time": 26000
+    },
+    "711": {
+      "breeding_order": 197,
+      "sm_training_time": 53000
+    },
+    "712": {
+      "breeding_order": 104,
+      "sm_training_time": 30000
+    },
+    "713": {
+      "breeding_order": 251,
+      "sm_training_time": 100000
+    },
+    "714": {
+      "breeding_order": 298,
+      "sm_training_time": 113000
+    },
+    "715": {
+      "breeding_order": 178,
+      "sm_training_time": 43000
+    },
+    "716": {
+      "breeding_order": 250,
+      "sm_training_time": 86000
+    },
+    "717": {
+      "breeding_order": 331,
+      "sm_training_time": 126000
+    },
+    "718": {
+      "breeding_order": 24,
+      "sm_training_time": 10000
+    },
+    "719": {
+      "breeding_order": 63,
+      "sm_training_time": 26000
+    },
+    "721": {
+      "breeding_order": 146,
+      "sm_training_time": 40000
+    },
+    "722": {
+      "breeding_order": 256,
+      "sm_training_time": 106000
+    },
+    "723": {
+      "breeding_order": 314,
+      "sm_training_time": 116000
+    },
+    "724": {
+      "breeding_order": 225,
+      "sm_training_time": 66000
+    },
+    "725": {
+      "breeding_order": 116,
+      "sm_training_time": 30000
+    },
+    "727": {
+      "breeding_order": 118,
+      "sm_training_time": 31000
+    },
+    "729": {
+      "breeding_order": 122,
+      "sm_training_time": 27000
+    },
+    "730": {
+      "breeding_order": 44,
+      "sm_training_time": 13000
+    },
+    "731": {
+      "breeding_order": 52,
+      "sm_training_time": 14000
+    },
+    "732": {
+      "breeding_order": 158,
+      "sm_training_time": 40000
+    },
+    "733": {
+      "breeding_order": 60,
+      "sm_training_time": 16000
+    },
+    "735": {
+      "breeding_order": 243,
+      "sm_training_time": 73000
+    },
+    "736": {
+      "breeding_order": 319,
+      "sm_training_time": 120000
+    },
+    "737": {
+      "breeding_order": 259,
+      "sm_training_time": 110000
+    },
+    "738": {
+      "breeding_order": 255,
+      "sm_training_time": 100000
+    },
+    "740": {
+      "breeding_order": 299,
+      "sm_training_time": 113000
+    },
+    "741": {
+      "breeding_order": 264,
+      "sm_training_time": 106000
+    },
+    "742": {
+      "breeding_order": 245,
+      "sm_training_time": 80000
+    },
+    "744": {
+      "breeding_order": 294,
+      "sm_training_time": 113000
+    },
+    "745": {
+      "breeding_order": 290,
+      "sm_training_time": 106000
+    },
+    "746": {
+      "breeding_order": 279,
+      "sm_training_time": 106000
+    },
+    "748": {
+      "breeding_order": 268,
+      "sm_training_time": 100000
+    },
+    "749": {
+      "breeding_order": 155,
+      "sm_training_time": 36000
+    },
+    "750": {
+      "breeding_order": 108,
+      "sm_training_time": 25000
+    },
+    "751": {
+      "breeding_order": 34,
+      "sm_training_time": 10000
+    },
+    "752": {
+      "breeding_order": 187,
+      "sm_training_time": 50000
+    },
+    "753": {
+      "breeding_order": 162,
+      "sm_training_time": 40000
+    },
+    "754": {
+      "breeding_order": 195,
+      "sm_training_time": 53000
+    },
+    "755": {
+      "breeding_order": 280,
+      "sm_training_time": 106000
+    },
+    "756": {
+      "breeding_order": 203,
+      "sm_training_time": 56000
+    },
+    "757": {
+      "breeding_order": 284,
+      "sm_training_time": 110000
+    },
+    "758": {
+      "breeding_order": 324,
+      "sm_training_time": 120000
+    },
+    "759": {
+      "breeding_order": 95,
+      "sm_training_time": 21000
+    },
+    "760": {
+      "breeding_order": 102,
+      "sm_training_time": 25000
+    },
+    "761": {
+      "breeding_order": 111,
+      "sm_training_time": 25000
+    },
+    "762": {
+      "breeding_order": 287,
+      "sm_training_time": 113000
+    },
+    "763": {
+      "breeding_order": 66,
+      "sm_training_time": 11000
+    },
+    "764": {
+      "breeding_order": 232,
+      "sm_training_time": 66000
+    },
+    "765": {
+      "breeding_order": 291,
+      "sm_training_time": 106000
+    },
+    "766": {
+      "breeding_order": 328,
+      "sm_training_time": 123000
+    },
+    "768": {
+      "breeding_order": 106,
+      "sm_training_time": 26000
+    },
+    "769": {
+      "breeding_order": 103,
+      "sm_training_time": 25000
+    },
+    "770": {
+      "breeding_order": 281,
+      "sm_training_time": 106000
+    },
+    "771": {
+      "breeding_order": 128,
+      "sm_training_time": 33000
+    },
+    "772": {
+      "breeding_order": 304,
+      "sm_training_time": 116000
+    },
+    "773": {
+      "breeding_order": 224,
+      "sm_training_time": 60000
+    },
+    "774": {
+      "breeding_order": 152,
+      "sm_training_time": 33000
+    },
+    "775": {
+      "breeding_order": 309,
+      "sm_training_time": 116000
+    },
+    "776": {
+      "breeding_order": 300,
+      "sm_training_time": 113000
+    },
+    "777": {
+      "breeding_order": 332,
+      "sm_training_time": 126000
+    },
+    "778": {
+      "breeding_order": 320,
+      "sm_training_time": 120000
+    },
+    "779": {
+      "breeding_order": 47,
+      "sm_training_time": 13000
+    },
+    "780": {
+      "breeding_order": 204,
+      "sm_training_time": 66000
+    },
+    "781": {
+      "breeding_order": 276,
+      "sm_training_time": 106000
+    },
+    "782": {
+      "breeding_order": 269,
+      "sm_training_time": 100000
+    },
+    "783": {
+      "breeding_order": 48,
+      "sm_training_time": 11000
+    },
+    "784": {
+      "breeding_order": 107,
+      "sm_training_time": 26000
+    },
+    "785": {
+      "breeding_order": 341,
+      "sm_training_time": 130000
+    },
+    "786": {
+      "breeding_order": 311,
+      "sm_training_time": 120000
+    },
+    "787": {
+      "breeding_order": 315,
+      "sm_training_time": 120000
+    },
+    "788": {
+      "breeding_order": 305,
+      "sm_training_time": 116000
+    },
+    "789": {
+      "breeding_order": 226,
+      "sm_training_time": 66000
+    },
+    "790": {
+      "breeding_order": 119,
+      "sm_training_time": 28000
+    },
+    "791": {
+      "breeding_order": 277,
+      "sm_training_time": 106000
+    },
+    "792": {
+      "breeding_order": 306,
+      "sm_training_time": 116000
+    },
+    "793": {
+      "breeding_order": 336,
+      "sm_training_time": 130000
+    },
+    "794": {
+      "breeding_order": 253,
+      "sm_training_time": 80000
+    },
+    "795": {
+      "breeding_order": 188,
+      "sm_training_time": 50000
+    },
+    "796": {
+      "breeding_order": 139,
+      "sm_training_time": 36000
+    },
+    "797": {
+      "breeding_order": 81,
+      "sm_training_time": 16000
+    },
+    "798": {
+      "breeding_order": 333,
+      "sm_training_time": 126000
+    },
+    "799": {
+      "breeding_order": 184,
+      "sm_training_time": 46000
+    },
+    "801": {
+      "breeding_order": 244,
+      "sm_training_time": 73000
+    },
+    "802": {
+      "breeding_order": 56,
+      "sm_training_time": 12000
+    },
+    "803": {
+      "breeding_order": 200,
+      "sm_training_time": 60000
+    },
+    "805": {
+      "breeding_order": 288,
+      "sm_training_time": 113000
+    },
+    "806": {
+      "breeding_order": 321,
+      "sm_training_time": 120000
+    },
+    "807": {
+      "breeding_order": 307,
+      "sm_training_time": 116000
+    },
+    "808": {
+      "breeding_order": 112,
+      "sm_training_time": 25000
+    },
+    "809": {
+      "breeding_order": 49,
+      "sm_training_time": 14000
+    },
+    "810": {
+      "breeding_order": 234,
+      "sm_training_time": 63000
+    },
+    "811": {
+      "breeding_order": 181,
+      "sm_training_time": 50000
+    },
+    "812": {
+      "breeding_order": 312,
+      "sm_training_time": 120000
+    },
+    "813": {
+      "breeding_order": 120,
+      "sm_training_time": 28000
+    },
+    "814": {
+      "breeding_order": 121,
+      "sm_training_time": 28000
+    },
+    "815": {
+      "breeding_order": 295,
+      "sm_training_time": 113000
+    },
+    "816": {
+      "breeding_order": 285,
+      "sm_training_time": 110000
+    },
+    "817": {
+      "breeding_order": 272,
+      "sm_training_time": 106000
+    },
+    "818": {
+      "breeding_order": 54,
+      "sm_training_time": 14000
+    },
+    "820": {
+      "breeding_order": 129,
+      "sm_training_time": 30000
+    },
+    "821": {
+      "breeding_order": 206,
+      "sm_training_time": 53000
+    },
+    "822": {
+      "breeding_order": 170,
+      "sm_training_time": 40000
+    },
+    "823": {
+      "breeding_order": 180,
+      "sm_training_time": 43000
+    },
+    "824": {
+      "breeding_order": 196,
+      "sm_training_time": 46000
+    },
+    "825": {
+      "breeding_order": 114,
+      "sm_training_time": 28000
+    },
+    "826": {
+      "breeding_order": 345,
+      "sm_training_time": 133000
+    },
+    "827": {
+      "breeding_order": 326,
+      "sm_training_time": 126000
+    },
+    "828": {
+      "breeding_order": 329,
+      "sm_training_time": 123000
+    },
+    "829": {
+      "breeding_order": 301,
+      "sm_training_time": 113000
+    },
+    "830": {
+      "breeding_order": 346,
+      "sm_training_time": 133000
+    },
+    "831": {
+      "breeding_order": 310,
+      "sm_training_time": 116000
+    },
+    "846": {
+      "breeding_order": 365,
+      "sm_training_time": 146000
+    },
+    "847": {
+      "breeding_order": 360,
+      "sm_training_time": 140000
+    },
+    "849": {
+      "breeding_order": 137,
+      "sm_training_time": 31000
+    },
+    "850": {
+      "breeding_order": 142,
+      "sm_training_time": 33000
+    },
+    "853": {
+      "breeding_order": 367,
+      "sm_training_time": 150000
+    },
+    "854": {
+      "breeding_order": 143,
+      "sm_training_time": 33000
+    },
+    "856": {
+      "breeding_order": 325,
+      "sm_training_time": 120000
+    },
+    "860": {
+      "breeding_order": 327,
+      "sm_training_time": 126000
+    },
+    "861": {
+      "breeding_order": 278,
+      "sm_training_time": 106000
+    },
+    "862": {
+      "breeding_order": 370,
+      "sm_training_time": 153000
+    },
+    "863": {
+      "breeding_order": 125,
+      "sm_training_time": 26000
+    },
+    "865": {
+      "breeding_order": 62,
+      "sm_training_time": 13000
+    },
+    "866": {
+      "breeding_order": 239,
+      "sm_training_time": 26000
+    },
+    "867": {
+      "breeding_order": 233,
+      "sm_training_time": 60000
+    },
+    "868": {
+      "breeding_order": 144,
+      "sm_training_time": 33000
+    },
+    "869": {
+      "breeding_order": 274,
+      "sm_training_time": 106000
+    },
+    "870": {
+      "breeding_order": 77,
+      "sm_training_time": 16000
+    },
+    "871": {
+      "breeding_order": 282,
+      "sm_training_time": 106000
+    },
+    "872": {
+      "breeding_order": 266,
+      "sm_training_time": 93000
+    },
+    "873": {
+      "breeding_order": 334,
+      "sm_training_time": 126000
+    },
+    "875": {
+      "breeding_order": 374,
+      "sm_training_time": 160000
+    },
+    "876": {
+      "breeding_order": 151,
+      "sm_training_time": 35000
+    },
+    "878": {
+      "breeding_order": 80,
+      "sm_training_time": 13000
+    },
+    "879": {
+      "breeding_order": 308,
+      "sm_training_time": 113000
+    },
+    "880": {
+      "breeding_order": 296,
+      "sm_training_time": 113000
+    },
+    "881": {
+      "breeding_order": 316,
+      "sm_training_time": 120000
+    },
+    "882": {
+      "breeding_order": 131,
+      "sm_training_time": 33000
+    },
+    "883": {
+      "breeding_order": 270,
+      "sm_training_time": 100000
+    },
+    "884": {
+      "breeding_order": 335,
+      "sm_training_time": 126000
+    },
+    "885": {
+      "breeding_order": 271,
+      "sm_training_time": 100000
+    },
+    "886": {
+      "breeding_order": 375,
+      "sm_training_time": 53000
+    },
+    "887": {
+      "breeding_order": 302,
+      "sm_training_time": 113000
+    },
+    "888": {
+      "breeding_order": 377,
+      "sm_training_time": 166000
+    },
+    "890": {
+      "breeding_order": 154,
+      "sm_training_time": 36000
+    },
+    "891": {
+      "breeding_order": 379,
+      "sm_training_time": 173000
+    },
+    "892": {
+      "breeding_order": 157,
+      "sm_training_time": 38000
+    },
+    "894": {
+      "breeding_order": 317,
+      "sm_training_time": 120000
+    },
+    "896": {
+      "breeding_order": 337,
+      "sm_training_time": 133000
+    },
+    "897": {
+      "breeding_order": 303,
+      "sm_training_time": 113000
+    },
+    "898": {
+      "breeding_order": 59,
+      "sm_training_time": 13000
+    },
+    "899": {
+      "breeding_order": 338,
+      "sm_training_time": 133000
+    },
+    "2000": {
+      "breeding_order": 382,
+      "sm_training_time": 180000
+    },
+    "2001": {
+      "breeding_order": 161,
+      "sm_training_time": 40000
+    },
+    "2005": {
+      "breeding_order": 136,
+      "sm_training_time": 28000
+    },
+    "2006": {
+      "breeding_order": 73,
+      "sm_training_time": 15000
+    },
+    "2007": {
+      "breeding_order": 257,
+      "sm_training_time": 86000
+    },
+    "2008": {
+      "breeding_order": 265,
+      "sm_training_time": 93000
+    },
+    "2009": {
+      "breeding_order": 249,
+      "sm_training_time": 80000
+    },
+    "2010": {
+      "breeding_order": 262,
+      "sm_training_time": 93000
+    },
+    "2011": {
+      "breeding_order": 313,
+      "sm_training_time": 120000
+    },
+    "2013": {
+      "breeding_order": 385,
+      "sm_training_time": 186000
+    },
+    "2014": {
+      "breeding_order": 173,
+      "sm_training_time": 43000
+    },
+    "2016": {
+      "breeding_order": 386,
+      "sm_training_time": 186000
+    },
+    "2017": {
+      "breeding_order": 175,
+      "sm_training_time": 43000
+    },
+    "2019": {
+      "breeding_order": 330,
+      "sm_training_time": 126000
+    },
+    "2020": {
+      "breeding_order": 293,
+      "sm_training_time": 113000
+    },
+    "2021": {
+      "breeding_order": 199,
+      "sm_training_time": 40000
+    },
+    "2022": {
+      "breeding_order": 339,
+      "sm_training_time": 133000
+    },
+    "2023": {
+      "breeding_order": 388,
+      "sm_training_time": 193000
+    },
+    "2024": {
+      "breeding_order": 176,
+      "sm_training_time": 43000
+    },
+    "2027": {
+      "breeding_order": 141,
+      "sm_training_time": 30000
+    },
+    "2029": {
+      "breeding_order": 260,
+      "sm_training_time": 90000
+    },
+    "2030": {
+      "breeding_order": 246,
+      "sm_training_time": 80000
+    },
+    "2031": {
+      "breeding_order": 322,
+      "sm_training_time": 123000
+    },
+    "2035": {
+      "breeding_order": 353,
+      "sm_training_time": 133000
+    },
+    "2036": {
+      "breeding_order": 342,
+      "sm_training_time": 133000
+    },
+    "2037": {
+      "breeding_order": 389,
+      "sm_training_time": 193000
+    },
+    "2039": {
+      "breeding_order": 390,
+      "sm_training_time": 200000
+    },
+    "2040": {
+      "breeding_order": 177,
+      "sm_training_time": 43000
+    },
+    "2042": {
+      "breeding_order": 361,
+      "sm_training_time": 140000
+    },
+    "2043": {
+      "breeding_order": 391,
+      "sm_training_time": 200000
+    },
+    "2044": {
+      "breeding_order": 179,
+      "sm_training_time": 43000
+    },
+    "2046": {
+      "breeding_order": 210,
+      "sm_training_time": 53000
+    },
+    "2047": {
+      "breeding_order": 343,
+      "sm_training_time": 133000
+    },
+    "2048": {
+      "breeding_order": 393,
+      "sm_training_time": 206000
+    },
+    "2049": {
+      "breeding_order": 185,
+      "sm_training_time": 46000
+    },
+    "2052": {
+      "breeding_order": 289,
+      "sm_training_time": 113000
+    },
+    "2053": {
+      "breeding_order": 362,
+      "sm_training_time": 140000
+    },
+    "2054": {
+      "breeding_order": 261,
+      "sm_training_time": 86000
+    },
+    "2055": {
+      "breeding_order": 344,
+      "sm_training_time": 133000
+    },
+    "2056": {
+      "breeding_order": 350,
+      "sm_training_time": 140000
+    },
+    "2057": {
+      "breeding_order": 394,
+      "sm_training_time": 210000
+    },
+    "2059": {
+      "breeding_order": 364,
+      "sm_training_time": 143000
+    },
+    "2060": {
+      "breeding_order": 351,
+      "sm_training_time": 140000
+    },
+    "2061": {
+      "breeding_order": 273,
+      "sm_training_time": 100000
+    },
+    "2062": {
+      "breeding_order": 340,
+      "sm_training_time": 133000
+    },
+    "2063": {
+      "breeding_order": 395,
+      "sm_training_time": 213000
+    },
+    "2064": {
+      "breeding_order": 189,
+      "sm_training_time": 46000
+    },
+    "2066": {
+      "breeding_order": 366,
+      "sm_training_time": 146000
+    },
+    "2067": {
+      "breeding_order": 358,
+      "sm_training_time": 120000
+    },
+    "2068": {
+      "breeding_order": 283,
+      "sm_training_time": 106000
+    },
+    "2069": {
+      "breeding_order": 396,
+      "sm_training_time": 216000
+    },
+    "2070": {
+      "breeding_order": 190,
+      "sm_training_time": 46000
+    },
+    "2072": {
+      "breeding_order": 368,
+      "sm_training_time": 150000
+    },
+    "2073": {
+      "breeding_order": 369,
+      "sm_training_time": 153000
+    },
+    "2074": {
+      "breeding_order": 430,
+      "sm_training_time": 333000
+    },
+    "2075": {
+      "breeding_order": 404,
+      "sm_training_time": 266000
+    },
+    "2076": {
+      "breeding_order": 163,
+      "sm_training_time": 33000
+    },
+    "2077": {
+      "breeding_order": 399,
+      "sm_training_time": 233000
+    },
+    "2078": {
+      "breeding_order": 164,
+      "sm_training_time": 33000
+    },
+    "2079": {
+      "breeding_order": 403,
+      "sm_training_time": 260000
+    },
+    "2080": {
+      "breeding_order": 400,
+      "sm_training_time": 240000
+    },
+    "2081": {
+      "breeding_order": 354,
+      "sm_training_time": 146000
+    },
+    "2084": {
+      "breeding_order": 165,
+      "sm_training_time": 33000
+    },
+    "2085": {
+      "breeding_order": 406,
+      "sm_training_time": 273000
+    },
+    "2086": {
+      "breeding_order": 397,
+      "sm_training_time": 226000
+    },
+    "2087": {
+      "breeding_order": 372,
+      "sm_training_time": 400000
+    },
+    "2089": {
+      "breeding_order": 409,
+      "sm_training_time": 283000
+    },
+    "2090": {
+      "breeding_order": 401,
+      "sm_training_time": 253000
+    },
+    "2091": {
+      "breeding_order": 166,
+      "sm_training_time": 33000
+    },
+    "2092": {
+      "breeding_order": 167,
+      "sm_training_time": 33000
+    },
+    "2093": {
+      "breeding_order": 402,
+      "sm_training_time": 253000
+    },
+    "2094": {
+      "breeding_order": 398,
+      "sm_training_time": 230000
+    },
+    "2096": {
+      "breeding_order": 168,
+      "sm_training_time": 33000
+    },
+    "2098": {
+      "breeding_order": 373,
+      "sm_training_time": 160000
+    },
+    "2099": {
+      "breeding_order": 392,
+      "sm_training_time": 200000
+    },
+    "2101": {
+      "breeding_order": 387,
+      "sm_training_time": 186000
+    },
+    "2102": {
+      "breeding_order": 384,
+      "sm_training_time": 173000
+    },
+    "2103": {
+      "breeding_order": 145,
+      "sm_training_time": 26000
+    },
+    "2105": {
+      "breeding_order": 147,
+      "sm_training_time": 30000
+    },
+    "2106": {
+      "breeding_order": 90,
+      "sm_training_time": 20000
+    },
+    "2107": {
+      "breeding_order": 318,
+      "sm_training_time": 120000
+    },
+    "2108": {
+      "breeding_order": 286,
+      "sm_training_time": 110000
+    },
+    "2109": {
+      "breeding_order": 352,
+      "sm_training_time": 140000
+    },
+    "2113": {
+      "breeding_order": 412,
+      "sm_training_time": 300000
+    },
+    "2114": {
+      "breeding_order": 376,
+      "sm_training_time": 166000
+    },
+    "2115": {
+      "breeding_order": 193,
+      "sm_training_time": 40000
+    },
+    "2116": {
+      "breeding_order": 171,
+      "sm_training_time": 40000
+    },
+    "2117": {
+      "breeding_order": 267,
+      "sm_training_time": 93000
+    },
+    "2118": {
+      "breeding_order": 159,
+      "sm_training_time": 30000
+    },
+    "2121": {
+      "breeding_order": 408,
+      "sm_training_time": 266000
+    },
+    "2122": {
+      "breeding_order": 191,
+      "sm_training_time": 46000
+    },
+    "2125": {
+      "breeding_order": 349,
+      "sm_training_time": 133000
+    },
+    "2126": {
+      "breeding_order": 359,
+      "sm_training_time": 146000
+    },
+    "2127": {
+      "breeding_order": 378,
+      "sm_training_time": 173000
+    },
+    "2128": {
+      "breeding_order": 263,
+      "sm_training_time": 100000
+    },
+    "2129": {
+      "breeding_order": 416,
+      "sm_training_time": 306000
+    },
+    "2130": {
+      "breeding_order": 198,
+      "sm_training_time": 43000
+    },
+    "2132": {
+      "breeding_order": 417,
+      "sm_training_time": 313000
+    },
+    "2133": {
+      "breeding_order": 207,
+      "sm_training_time": 46000
+    },
+    "2135": {
+      "breeding_order": 348,
+      "sm_training_time": 126000
+    },
+    "2136": {
+      "breeding_order": 355,
+      "sm_training_time": 133000
+    },
+    "2137": {
+      "breeding_order": 381,
+      "sm_training_time": 186000
+    },
+    "2138": {
+      "breeding_order": 380,
+      "sm_training_time": 180000
+    },
+    "2139": {
+      "breeding_order": 252,
+      "sm_training_time": 100000
+    },
+    "2140": {
+      "breeding_order": 418,
+      "sm_training_time": 320000
+    },
+    "2141": {
+      "breeding_order": 208,
+      "sm_training_time": 46000
+    },
+    "2143": {
+      "breeding_order": 357,
+      "sm_training_time": 126000
+    },
+    "2144": {
+      "breeding_order": 356,
+      "sm_training_time": 133000
+    },
+    "2145": {
+      "breeding_order": 383,
+      "sm_training_time": 186000
+    },
+    "2146": {
+      "breeding_order": 156,
+      "sm_training_time": 33000
+    },
+    "2148": {
+      "breeding_order": 423,
+      "sm_training_time": 346000
+    },
+    "2149": {
+      "breeding_order": 211,
+      "sm_training_time": 46000
+    },
+    "2150": {
+      "breeding_order": 347,
+      "sm_training_time": 120000
+    },
+    "2151": {
+      "breeding_order": 363,
+      "sm_training_time": 146000
+    },
+    "2152": {
+      "breeding_order": 410,
+      "sm_training_time": 306000
+    },
+    "2153": {
+      "breeding_order": 405,
+      "sm_training_time": 266000
+    },
+    "2155": {
+      "breeding_order": 407,
+      "sm_training_time": 273000
+    },
+    "2156": {
+      "breeding_order": 424,
+      "sm_training_time": 353000
+    },
+    "2157": {
+      "breeding_order": 371,
+      "sm_training_time": 160000
+    },
+    "2158": {
+      "breeding_order": 172,
+      "sm_training_time": 40000
+    },
+    "2159": {
+      "breeding_order": 212,
+      "sm_training_time": 46000
+    },
+    "2160": {
+      "breeding_order": 421,
+      "sm_training_time": 333000
+    },
+    "2161": {
+      "breeding_order": 213,
+      "sm_training_time": 46000
+    },
+    "2162": {
+      "breeding_order": 411,
+      "sm_training_time": 306000
+    },
+    "2167": {
+      "breeding_order": 422,
+      "sm_training_time": 340000
+    },
+    "2168": {
+      "breeding_order": 214,
+      "sm_training_time": 46000
+    },
+    "2169": {
+      "breeding_order": 420,
+      "sm_training_time": 326000
+    },
+    "2170": {
+      "breeding_order": 215,
+      "sm_training_time": 46000
+    },
+    "2171": {
+      "breeding_order": 419,
+      "sm_training_time": 333000
+    },
+    "2172": {
+      "breeding_order": 216,
+      "sm_training_time": 46000
+    },
+    "2174": {
+      "breeding_order": 425,
+      "sm_training_time": 340000
+    },
+    "2175": {
+      "breeding_order": 217,
+      "sm_training_time": 46000
+    },
+    "50031": {
+      "breeding_order": 64,
+      "sm_training_time": 26000
+    },
+    "2177": {
+      "breeding_order": 426,
+      "sm_training_time": 346000
+    },
+    "2178": {
+      "breeding_order": 218,
+      "sm_training_time": 46000
+    },
+    "2180": {
+      "breeding_order": 427,
+      "sm_training_time": 353000
+    },
+    "2181": {
+      "breeding_order": 219,
+      "sm_training_time": 46000
+    },
+    "2183": {
+      "breeding_order": 428,
+      "sm_training_time": 360000
+    },
+    "2184": {
+      "breeding_order": 220,
+      "sm_training_time": 46000
+    },
+    "2186": {
+      "breeding_order": 429,
+      "sm_training_time": 366000
+    },
+    "2187": {
+      "breeding_order": 221,
+      "sm_training_time": 46000
+    },
+    "2189": {
+      "breeding_order": 69,
+      "sm_training_time": 16000
+    },
+    "2190": {
+      "breeding_order": 431,
+      "sm_training_time": 373000
+    },
+    "2191": {
+      "breeding_order": 222,
+      "sm_training_time": 46000
+    },
+    "2193": {
+      "breeding_order": 432,
+      "sm_training_time": 380000
+    },
+    "2194": {
+      "breeding_order": 223,
+      "sm_training_time": 46000
+    },
+    "2196": {
+      "breeding_order": 433,
+      "sm_training_time": 386000
+    },
+    "2197": {
+      "breeding_order": 227,
+      "sm_training_time": 48000
+    },
+    "2199": {
+      "breeding_order": 434,
+      "sm_training_time": 393000
+    },
+    "2200": {
+      "breeding_order": 228,
+      "sm_training_time": 48000
+    },
+    "2202": {
+      "breeding_order": 435,
+      "sm_training_time": 393000
+    },
+    "2203": {
+      "breeding_order": 229,
+      "sm_training_time": 48000
+    },
+    "2205": {
+      "breeding_order": 436,
+      "sm_training_time": 400000
+    },
+    "2206": {
+      "breeding_order": 230,
+      "sm_training_time": 48000
+    },
+    "2208": {
+      "breeding_order": 437,
+      "sm_training_time": 406000
+    },
+    "2209": {
+      "breeding_order": 231,
+      "sm_training_time": 48000
+    },
+    "2211": {
+      "breeding_order": 438,
+      "sm_training_time": 413000
+    },
+    "2212": {
+      "breeding_order": 235,
+      "sm_training_time": 50000
+    },
+    "2214": {
+      "breeding_order": 439,
+      "sm_training_time": 420000
+    },
+    "2215": {
+      "breeding_order": 236,
+      "sm_training_time": 50000
+    },
+    "2217": {
+      "breeding_order": 440,
+      "sm_training_time": 426000
+    },
+    "2218": {
+      "breeding_order": 237,
+      "sm_training_time": 50000
+    },
+    "2220": {
+      "breeding_order": 441,
+      "sm_training_time": 433000
+    },
+    "2221": {
+      "breeding_order": 238,
+      "sm_training_time": 50000
+    },
+    "2223": {
+      "breeding_order": 442,
+      "sm_training_time": 440000
+    },
+    "2224": {
+      "breeding_order": 240,
+      "sm_training_time": 53000
+    },
+    "2226": {
+      "breeding_order": 443,
+      "sm_training_time": 440000
+    },
+    "2227": {
+      "breeding_order": 241,
+      "sm_training_time": 53000
+    },
+    "2229": {
+      "breeding_order": 444,
+      "sm_training_time": 440000
+    },
+    "2230": {
+      "breeding_order": 247,
+      "sm_training_time": 56000
+    },
+    "2232": {
+      "breeding_order": 445,
+      "sm_training_time": 440000
+    },
+    "2233": {
+      "breeding_order": 242,
+      "sm_training_time": 53000
+    },
+    "2235": {
+      "breeding_order": 414,
+      "sm_training_time": 313000
+    },
+    "2236": {
+      "breeding_order": 415,
+      "sm_training_time": 320000
+    },
+    "2237": {
+      "breeding_order": 413,
+      "sm_training_time": 300000
+    },
+    "2238": {
+      "breeding_order": 446,
+      "sm_training_time": 440000
+    },
+    "2239": {
+      "breeding_order": 248,
+      "sm_training_time": 56000
+    }
+  },
+  "globals": {
+    "SOUL_MIXER_POWERUPS_LEVELS": [
+      {
+        "cash_cost": 1,
+        "order_increment": 1
+      },
+      {
+        "cash_cost": 2,
+        "order_increment": 1
+      },
+      {
+        "cash_cost": 4,
+        "order_increment": 2
+      },
+      {
+        "cash_cost": 8,
+        "order_increment": 3
+      },
+      {
+        "cash_cost": 15,
+        "order_increment": 4
+      },
+      {
+        "cash_cost": 20,
+        "order_increment": 4
+      }
+    ],
+    "SOUL_MIXER_MIN_LEVEL": 8
+  },
+  "localization_strings": [
+    {
+      "id": "1615",
+      "name": "SOUL_MIXER_SUB_TITLE",
+      "text": "Chose wisely 2 units, mix their souls and summon a third, stronger unit!"
+    },
+    {
+      "id": "1616",
+      "name": "SOUL_MIXER_NO_SOUL",
+      "text": "No Soul!"
+    },
+    {
+      "id": "1617",
+      "name": "SOUL_MIXER_CHOOSE_SOULS",
+      "text": "Chose 2 souls to mix'em up!"
+    },
+    {
+      "id": "1618",
+      "name": "SOUL_MIXER_SELECT_UNIT",
+      "text": "SELECT UNIT"
+    },
+    {
+      "id": "1619",
+      "name": "SOUL_MIXER_POWERUP",
+      "text": "Powerup"
+    },
+    {
+      "id": "1620",
+      "name": "SOUL_MIXER_START_MIXING",
+      "text": "START\nMIXING"
+    },
+    {
+      "id": "1621",
+      "name": "SOUL_MIXER_SPEED_UP",
+      "text": "Speedup"
+    },
+    {
+      "id": "1622",
+      "name": "SOUL_MIXER_REMAINING_TIME",
+      "text": "Remaining time:"
+    },
+    {
+      "id": "1623",
+      "name": "SOUL_MIXER_HELP_1",
+      "text": "Combine your units and invoke a new powerful unit"
+    },
+    {
+      "id": "1624",
+      "name": "SOUL_MIXER_HELP_2",
+      "text": "Give a boost to the new\ncreature with the Power-up\nbutton"
+    },
+    {
+      "id": "1625",
+      "name": "SOUL_MIXER_HELP_3",
+      "text": "Start the invocation and press the Speed\nUp button to get your unit faster."
+    },
+    {
+      "id": "1626",
+      "name": "SOUL_MIXER_HELP_4",
+      "text": "Get your unit and continue exploring the\nunique combinations."
+    },
+    {
+      "id": "1627",
+      "name": "SOUL_MIXER_WARNING_POWERUPS",
+      "text": "You will lose your powerups. Are you sure?"
+    },
+    {
+      "id": "1628",
+      "name": "SOUL_MIXER_GET_UNIT",
+      "text": "GET UNIT"
+    },
+    {
+      "id": "1629",
+      "name": "SOUL_MIXER_WARNING_CROSS_PROMOTION",
+      "text": "Neither Infernal Dragon, Crystal\nDragon, Rainbow Dragon or\nGalaxy Dragon can be mixed\nbefore you reach level 20"
+    }
+  ]
+}

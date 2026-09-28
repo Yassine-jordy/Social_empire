@@ -158,10 +158,10 @@ def do_command(USERID, cmd, args):
         town_id = args[5]
         print("Push", str(get_name_from_item_id(unit_id)), "to", f"({b_x},{b_y}).")
         map = save["maps"][town_id]
-        if any(item[0] == soul_mixer.BUILDING_ID and item[1:3] == [b_x, b_y] for item in map['items']):
-            # The supplied config has no eligible input ranks and capacity zero.
-            # Do not let the generic transfer delete a player's unit anyway.
-            soul_mixer.reject_unrestored_mixing()
+        for building in map['items']:
+            if building[0] == soul_mixer.BUILDING_ID and building[1:3] == [b_x, b_y]:
+                soul_mixer.store_input(save, building, args, get_game_config())
+                return
         # Unit into building
         for item in map["items"]:
             if item[1] == b_x and item[2] == b_y:
@@ -189,7 +189,8 @@ def do_command(USERID, cmd, args):
         map = save["maps"][town_id]
         for building in map['items']:
             if building[0] == soul_mixer.BUILDING_ID and building[1:3] == [b_x, b_y]:
-                soul_mixer.validate_withdrawal(save, building, args)
+                soul_mixer.return_input(save, building, args)
+                return
         # Remove unit from building
         for item in map["items"]:
             if item[1] == b_x and item[2] == b_y:

@@ -65,6 +65,31 @@ def patch_game_config():
                     print(" * Mod applied:", mod)
 
     remove_duplicate_items()
+    # Apply only Soul Mixer fields by item ID, never upstream array indices or
+    # whole item records. Provenance identifies these as reconstructed balance.
+    with open(os.path.join(CONFIG_DIR, 'soul_mixer_restoration.json'), encoding='utf-8') as source:
+        soul = json.load(source)
+    excluded = set(soul['excluded_unit_ids'])
+    orders = []
+    for item in __game_config['items']:
+        item_id = int(item['id'])
+        fields = soul['units'].get(str(item_id))
+        if fields and item_id not in excluded and item.get('type') == 'u':
+            if fields['breeding_order'] <= 0 or fields['sm_training_time'] <= 0:
+                raise ValueError('Invalid upstream Soul Mixer data')
+            item.update(fields)
+            orders.append(fields['breeding_order'])
+        else:
+            item.pop('breeding_order', None)
+            item.pop('sm_training_time', None)
+        if item_id == 1529:
+            item['unit_capacity'] = '2'
+    if len(orders) != len(set(orders)):
+        raise ValueError('Duplicate Soul Mixer orders')
+    __game_config['globals'].update(soul['globals'])
+    labels = {int(row['id']): row for row in soul['localization_strings']}
+    __game_config['localization_strings'] = [row for row in __game_config['localization_strings']
+                                           if not isinstance(row, dict) or int(row['id']) not in labels] + list(labels.values())
 
 print (" [+] Applying config patches and mods...")
 patch_game_config()

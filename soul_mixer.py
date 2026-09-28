@@ -1,9 +1,8 @@
 """Recovered Soul Mixer rules, pinned to the bundled 1.2.7/1.4.07 clients.
 
-Ranks/timers/prices are NOT reconstructed from unit combat statistics. See the
-Soul Mixer section in docs/restoration/BUILDING_RESTORATION_REPORT.md.
-The selection rule is kept separate until an authoritative client handshake and
-the missing original configuration can be recovered.
+Ranks/timers/prices use the explicitly authorized upstream reconstruction,
+with provenance in config/soul_mixer_restoration.json. They are not historical
+production data. Production remains disabled pending a server-result handshake.
 """
 import math
 import secrets
@@ -105,6 +104,52 @@ def reject_unrestored_mixing():
     # Explicit rather than fake success, even if a mod adds some missing fields:
     # the stock popup still rolls locally and ignores server-selected results.
     raise NotImplementedError(MISSING_DATA + '; authoritative result handshake also required')
+
+
+def store_input(save, building, args, config):
+    """Atomically move an owned deployed unit into one of two input slots."""
+    if len(args) != 6:
+        raise ValueError('Invalid input arguments')
+    for value in args:
+        integer(value)
+    x, y, unit_id, bx, by, town_id = args
+    if town_id >= len(save['maps']):
+        raise ValueError('Invalid town')
+    town = save['maps'][town_id]
+    if building[0] != BUILDING_ID or building[1:3] != [bx, by]:
+        raise ValueError('Invalid Soul Mixer')
+    eligible = {int(item['id']) for item in ranked_units(config)}
+    if unit_id not in eligible:
+        raise ValueError('Ineligible Soul Mixer input')
+    unit = next((row for row in town['items'] if row[:3] == [unit_id, x, y]), None)
+    if unit is None or unit is building:
+        raise ValueError('Input unit is not deployed here')
+    if len(building) < 7:
+        building.append([])
+    if len(building) < 8:
+        building.append({})
+    attrs = building[7]
+    queue = save['privateState'].get('barracksQueues', {}).get(str(attrs.get('bq')), {})
+    if queue.get('amount', 0) or len(building[6]) >= 2:
+        raise ValueError('Soul Mixer is occupied')
+    # Retain complete source rows for safe withdrawal, including unit attributes.
+    attrs.setdefault('soulMixerInputs', []).append(unit)
+    building[6].append(unit_id)
+    town['items'].remove(unit)
+
+
+def return_input(save, building, args):
+    validate_withdrawal(save, building, args)
+    records = building[7].get('soulMixerInputs', []) if len(building) > 7 else []
+    row = next((row for row in records if row[0] == args[3]), None)
+    if row is None:
+        # Legacy ID-only storage has no recoverable instance attributes.
+        row = [args[3], args[4], args[5], args[6], 0, 0]
+    else:
+        records.remove(row)
+        row[1:4] = args[4:7]
+    building[6].remove(args[3])
+    save['maps'][args[2]]['items'].append(row)
 
 
 def validate_withdrawal(save, building, args):

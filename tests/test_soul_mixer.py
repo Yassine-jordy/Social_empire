@@ -53,10 +53,15 @@ class SoulMixerRulesTests(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             soul_mixer.select_result(self.fixture([10, 10]), [1, 2])
 
-    def test_shipped_configuration_is_explicitly_incomplete(self):
-        with self.assertRaisesRegex(NotImplementedError, 'breeding_order'):
-            soul_mixer.ranked_units(get_game_config())
-        self.assertNotIn('SOUL_MIXER_POWERUPS_LEVELS', get_game_config().get('globals', {}))
+    def test_upstream_reconstruction_has_unique_orders_and_exclusions(self):
+        config = get_game_config()
+        units = soul_mixer.ranked_units(config)
+        self.assertEqual(len(units), 437)
+        self.assertEqual(len({int(u['breeding_order']) for u in units}), 437)
+        source = json.loads((Path(__file__).resolve().parents[1] / 'config/soul_mixer_restoration.json').read_text())
+        self.assertFalse({int(u['id']) for u in units} & set(source['excluded_unit_ids']))
+        self.assertEqual(config['globals']['SOUL_MIXER_MIN_LEVEL'], 8)
+        self.assertEqual(config['globals']['SOUL_MIXER_POWERUPS_LEVELS'], source['globals']['SOUL_MIXER_POWERUPS_LEVELS'])
 
 
 class SoulMixerRouteTests(unittest.TestCase):
@@ -135,16 +140,34 @@ class SoulMixerRouteTests(unittest.TestCase):
         self.assertEqual(self.post([pop]).status_code, 400)
         self.assertEqual(self.snapshot(), after)
 
-    def test_missing_data_does_not_consume_inputs_and_batch_rolls_back(self):
+    def test_invalid_input_does_not_consume_units_and_batch_rolls_back(self):
         self.assertEqual(self.post([self.buy()]).status_code, 200)
-        sessions.session(self.uid)['maps'][0]['items'].append([512, 45, 45, 0, 0, 0])
+        sessions.session(self.uid)['maps'][0]['items'].append([503, 45, 45, 0, 0, 0])
         sessions.save_session(self.uid)
         before = self.snapshot()
         response = self.post([('name_map', [0, 'Must roll back']),
-                              ('push_unit', [45, 45, 512, 40, 40, 0])])
-        self.assertEqual(response.status_code, 422)
-        self.assertIn('breeding_order', response.json['error'])
+                              ('push_unit', [45, 45, 503, 40, 40, 0])])
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(self.snapshot(), before)
+
+    def test_two_inputs_capacity_replay_reload_and_lossless_return(self):
+        self.assertEqual(self.post([self.buy()]).status_code, 200)
+        town = sessions.session(self.uid)['maps'][0]
+        first = [512, 45, 45, 0, 123, 2, [], {'health': 30}]
+        town['items'].extend([first, [512, 46, 45, 0, 124, 0], [512, 47, 45, 0, 125, 0]])
+        sessions.save_session(self.uid)
+        push = ('push_unit', [45, 45, 512, 40, 40, 0])
+        self.assertEqual(self.post([push]).status_code, 200)
+        before = self.snapshot()
+        self.assertEqual(self.post([push]).status_code, 400)
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.post([('push_unit', [46, 45, 512, 40, 40, 0])]).status_code, 200)
+        before = self.snapshot()
+        self.assertEqual(self.post([('push_unit', [47, 45, 512, 40, 40, 0])]).status_code, 400)
+        self.assertEqual(self.snapshot(), before)
+        sessions.load_saved_villages()
+        self.assertEqual(self.post([('pop_unit', [40, 40, 0, 512, 45, 45, 0])]).status_code, 200)
+        self.assertIn(first, sessions.session(self.uid)['maps'][0]['items'])
 
     def test_active_legacy_queue_keeps_input_units_locked(self):
         self.assertEqual(self.post([self.buy()]).status_code, 200)

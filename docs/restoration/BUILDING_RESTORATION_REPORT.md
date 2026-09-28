@@ -26,6 +26,10 @@ All 1010 effective type=b records are inventoried below and in [BUILDING_AUDIT.c
 
 ## Soul Mixer — dedicated analysis
 
+**Latest authorized implementation (28 September):** user explicitly approved the upstream reconstructed dataset from `e8562a6cef35b59e95862d732ead0e342a231561` and `880cde18b3fc233ab7a3914e95b81e9297aeaa64`. Its 437 positive unique ranks/timers, exclusions, Soul Mixer capacity 2, unlock level 8, premium table and 15 popup labels are overlaid by item ID without replacing unrelated records. This supersedes the earlier decision to wait for original ranks; the dataset is **not authentic Social Point production balance**. Provenance is embedded in `config/soul_mixer_restoration.json`.
+
+Actual Ruffle acceptance with momo123: Sayan Dragon and Stormy Dragon visibly occupied both named slots; server accepted both `push_unit` transfers and subsequent returns/reselection. No units were added to the account. Input transfer validates eligibility, source instance, two-slot capacity and active queues, preserving original unit records for withdrawal. **41 tests passed.** Next Flash state exposes result preview, POWERUP and START MIXING; a subsequent premium attempt returned 422 while the client advanced locally to GET UNIT. Production/reward persistence remains unimplemented, not a successful mix. Earlier missing-data statements below are historical findings.
+
 Updated 28 September 2026. **Status: Partial — original client panel/window now reached in Ruffle; full mixing remains blocked by missing original data and authoritative client synchronization.** No substitute recipes or timers were installed.
 
 ### Actual-client UI continuation
