@@ -46,6 +46,7 @@ app.secret_key = get_session_secret()
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax", MAX_CONTENT_LENGTH=2 * 1024 * 1024)
 
 GAME_PREFIX = "/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/"
+DEFAULT_GAMEVERSION = 'SocialEmpires1.2.7sec.swf'
 
 @app.before_request
 def require_player_ownership():
@@ -105,7 +106,7 @@ def login():
             if userid is None or userid not in all_saves_userid():
                 message = "This account has no empire."
             else:
-                selected_client = session.get('REQUESTED_GAMEVERSION', 'SocialEmpires0926bsec.swf')
+                selected_client = session.get('REQUESTED_GAMEVERSION', DEFAULT_GAMEVERSION)
                 session.clear()
                 session["ACCOUNT_USERNAME"] = username
                 session["USERID"] = userid
@@ -123,8 +124,19 @@ def login():
 
 @app.route("/logout")
 def logout():
+    selected_client = session.get('GAMEVERSION', DEFAULT_GAMEVERSION)
     session.clear()
+    session['REQUESTED_GAMEVERSION'] = selected_client
     return redirect("/")
+
+
+@app.after_request
+def prevent_stale_game_session(response):
+    # Authenticated bootstrap/config must be fetched again after reconnect.
+    # Static SWFs keep their normal cache validators and versioned filenames.
+    if request.path.startswith(GAME_PREFIX) or request.path in ('/', '/logout', '/ruffle.html', '/play.html'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -446,6 +458,14 @@ def command_response():
     try:
         command(USERID, data, client_id=client_id)
     except NotImplementedError as error:
+        unavailable = [c['cmd'] for c in data['commands']
+                       if c['cmd'] in ('speed_up_queue', 'buy_si_help', 'finish_si')]
+        if unavailable:
+            # save_transaction has rolled back the entire rejected batch.
+            # Let the host page stop Flash's retry loop, never acknowledge it.
+            return {"result": "error", "error": str(error),
+                    "code": "unsupported_action", "commands": sorted(set(unavailable)),
+                    "recovery": "reload_saved_empire"}, 422
         return {"result": "error", "error": str(error)}, 422
     except (ValueError, TypeError, KeyError, IndexError) as error:
         return {"result": "error", "error": "Invalid command arguments or state"}, 400

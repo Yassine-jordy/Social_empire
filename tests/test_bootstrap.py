@@ -106,13 +106,30 @@ class BootstrapTests(unittest.TestCase):
         with client.session_transaction() as state:
             self.assertEqual(state['GAMEVERSION'], 'SocialEmpires1.2.7sec.swf')
         with other.session_transaction() as state:
-            self.assertEqual(state['GAMEVERSION'], 'SocialEmpires0926bsec.swf')
+            self.assertEqual(state['GAMEVERSION'], 'SocialEmpires1.2.7sec.swf')
         client.get('/logout')
         with patch.object(server.Path, 'is_file', return_value=True):
             self.assertEqual(client.get('/ruffle.html?client=1.2.7').status_code, 302)
         client.post('/', data={'username':'client-version', 'password':'test-password'})
         response = client.get('/ruffle.html')
         self.assertIn(b'SocialEmpires1.2.7sec.swf', response.data)
+
+    def test_default_client_survives_plain_logout_login(self):
+        client, uid = self.account('relogin-client')
+        for _ in range(2):
+            page = client.get('/ruffle.html')
+            self.assertIn(b'SocialEmpires1.2.7sec.swf', page.data)
+            self.assertEqual(page.headers['Cache-Control'], 'no-store')
+            client.get('/logout')
+            with client.session_transaction() as state:
+                self.assertNotIn('USERID', state)
+                self.assertNotIn('ACCOUNT_USERNAME', state)
+            client.post('/', data={'username':'relogin-client', 'password':'test-password'})
+        with patch.object(server.Path, 'is_file', return_value=True):
+            client.get('/ruffle.html?client=0.9.26b')
+        client.get('/logout')
+        client.post('/', data={'username':'relogin-client', 'password':'test-password'})
+        self.assertIn(b'SocialEmpires0926bsec.swf', client.get('/ruffle.html').data)
 
     def test_assets_cache_and_path_traversal(self):
         client = server.app.test_client(); prefix='/default01.static.socialpointgames.com/static/socialempires/'
@@ -125,6 +142,22 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(client.get(prefix+'missing.swf').status_code, 404)
         self.assertEqual(client.get(prefix+'../social_empires.db').status_code, 404)
         self.assertEqual(client.get(prefix+'..%5csocial_empires.db').status_code, 404)
+
+    def test_unsupported_action_offers_recovery_without_acknowledging(self):
+        client, uid = self.account('unsupported-recovery')
+        before = copy.deepcopy(sessions.session(uid))
+        for name, args in [('speed_up_queue', ['1']),
+                           ('buy_si_help', [59, 55, 0, 299, 1]),
+                           ('finish_si', [59, 55, 0, 299])]:
+            batch = dict(ts=0, first_number=1, accessToken='', tries=1, publishActions='0',
+                         commands=[dict(cmd=name, args=args)])
+            response = client.post(PREFIX+'command.php', data={**self.form(uid),
+                'data':'0'*64+';'+json.dumps(batch)})
+            self.assertEqual(response.status_code, 422)
+            self.assertEqual(response.json['result'], 'error')
+            self.assertEqual(response.json['code'], 'unsupported_action')
+            self.assertEqual(response.json['recovery'], 'reload_saved_empire')
+            self.assertEqual(sessions.session(uid), before)
 
     def test_malformed_command_rejected(self):
         client, uid = self.account('malformed')
