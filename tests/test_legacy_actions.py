@@ -26,6 +26,30 @@ class LegacyActionsTests(unittest.TestCase):
         return self.client.post(PREFIX+'command.php',data=dict(USERID=self.uid,user_key='legacy',
             language='en',client_id='legacy-test',data='0'*64+';'+json.dumps(batch)))
 
+    def test_store_frombug_transfer_retry_reload_and_validation(self):
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'] = [[299,59,55,0,0,0,[],{}]]
+        save['privateState']['gifts'] = [0] * 300
+        sessions.save_session(self.uid)
+        action = [('store_item_frombug',[59,55,0,299])]
+        self.assertEqual(self.post(action).status_code,200)
+        sessions.load_saved_villages()
+        save = sessions.session(self.uid)
+        self.assertEqual(save['maps'][0]['items'],[])
+        self.assertEqual(save['privateState']['gifts'][299],1)
+        before = copy.deepcopy(save)
+        self.assertEqual(self.post(action).status_code,200)
+        self.assertEqual(sessions.session(self.uid),before)
+        for args in ([59,55,0,299], [59,55,-1,299], [59,55,1,299], [59,55,0,999999], [59,55,0]):
+            self.assertEqual(self.post([('store_item_frombug',args)],number=2).status_code,400)
+            self.assertEqual(sessions.session(self.uid),before)
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'] = [[299,59,55,0,0,0,[],{'si':[]}]]
+        sessions.save_session(self.uid)
+        before = copy.deepcopy(save)
+        self.assertEqual(self.post(action,number=3).status_code,400)
+        self.assertEqual(sessions.session(self.uid),before)
+
     def test_zeppelin_observed_batch_and_retry_reload(self):
         commands = [('buy',[299,59,55,0,0,1,1,'b'])]
         commands += [('buy_si_help',[59,55,0,299,1])] * 20

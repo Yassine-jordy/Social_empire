@@ -7,7 +7,7 @@ import hashlib
 import json
 import math
 
-COMMANDS = {'speed_up_queue', 'buy_si_help', 'finish_si'}
+COMMANDS = {'speed_up_queue', 'buy_si_help', 'finish_si', 'store_item_frombug'}
 
 
 def integer(value, minimum=0):
@@ -32,6 +32,34 @@ def receipt(save, commands, client_id, number):
     # The enclosing save transaction rolls this back if any command fails.
     receipts[key] = value
     return False
+
+
+def store_item_frombug(save, args, config):
+    """Flash Base.storeItem and upstream 880cde18 cmd_store_item alias.
+
+    This architecture stores inventory counts in privateState.gifts.
+    The enclosing transaction persists removal, credit and batch receipt together.
+    """
+    if not isinstance(args, list) or len(args) != 4:
+        raise ValueError('Invalid storage arguments')
+    x, y, town_id, item_id = [integer(value) for value in args]
+    if town_id >= len(save['maps']) or not any(int(item['id']) == item_id for item in config['items']):
+        raise ValueError('Invalid storage item or map')
+    items = save['maps'][town_id]['items']
+    matches = [row for row in items if row[:3] == [item_id, x, y]]
+    if len(matches) != 1:
+        raise ValueError('Storage requires one owned map item')
+    row = matches[0]
+    # Count-only inventory cannot preserve occupants or active building state.
+    if (len(row) > 6 and row[6]) or (len(row) > 7 and row[7]):
+        raise ValueError('Cannot store an occupied or active item')
+    gifts = save['privateState']['gifts']
+    if not isinstance(gifts, list):
+        raise ValueError('Invalid inventory')
+    count = integer(gifts[item_id]) if item_id < len(gifts) else 0
+    gifts.extend([0] * max(0, item_id + 1 - len(gifts)))
+    gifts[item_id] = count + 1
+    items.remove(row)
 
 
 def speed_up_queue(save, args, config, now):

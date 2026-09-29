@@ -58,7 +58,9 @@ def do_command(USERID, cmd, args):
     save = session(USERID)
     print (" [+] COMMAND: ", cmd, "(", args, ") -> ", sep='', end='')
 
-    if cmd == 'speed_up_queue':
+    if cmd == 'store_item_frombug':
+        legacy_actions.store_item_frombug(save, args, get_game_config())
+    elif cmd == 'speed_up_queue':
         legacy_actions.speed_up_queue(save, args, get_game_config(), timestamp_now())
     elif cmd == 'buy_si_help':
         legacy_actions.buy_si_help(save, args, get_game_config())
