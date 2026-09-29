@@ -7,6 +7,7 @@ from constants import Constant
 from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from database import record_pvp_battle
 import soul_mixer
+import legacy_actions
 
 def get_strategy_type(id):
     if id == 8:
@@ -28,6 +29,9 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
+        if any(comm['cmd'] in legacy_actions.COMMANDS for comm in commands):
+            if legacy_actions.receipt(save, commands, client_id, first_number):
+                return
         # Flash retries the same numbered batch with different ts/tries fields.
         # Persist the receipt with the debit so a retry cannot charge twice.
         receipt_key = None
@@ -54,7 +58,13 @@ def do_command(USERID, cmd, args):
     save = session(USERID)
     print (" [+] COMMAND: ", cmd, "(", args, ") -> ", sep='', end='')
 
-    if cmd == 'buy_powerups':
+    if cmd == 'speed_up_queue':
+        legacy_actions.speed_up_queue(save, args, get_game_config(), timestamp_now())
+    elif cmd == 'buy_si_help':
+        legacy_actions.buy_si_help(save, args, get_game_config())
+    elif cmd == 'finish_si':
+        legacy_actions.finish_si(save, args, get_game_config())
+    elif cmd == 'buy_powerups':
         soul_mixer.buy_powerup(save, args, get_game_config())
 
     elif cmd == 'push_queue_unit':
@@ -84,6 +94,9 @@ def do_command(USERID, cmd, args):
             xp = int(get_attribute_from_item_id(id, "xp"))
             map["xp"] = map["xp"] + xp
         map["items"] += [[id, x, y, orientation, collected_at_timestamp, level]]
+        if id == 299:
+            # Zeppelin social construction starts with an empty helper list.
+            map['items'][-1].extend([[], {'si': []}])
 
     elif cmd == Constant.CMD_COMPLETE_TUTORIAL:
         tutorial_step = args[0]

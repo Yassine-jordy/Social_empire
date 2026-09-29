@@ -143,7 +143,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(client.get(prefix+'../social_empires.db').status_code, 404)
         self.assertEqual(client.get(prefix+'..%5csocial_empires.db').status_code, 404)
 
-    def test_unsupported_action_offers_recovery_without_acknowledging(self):
+    def test_legacy_action_invalid_state_is_rejected_without_acknowledging(self):
         client, uid = self.account('unsupported-recovery')
         before = copy.deepcopy(sessions.session(uid))
         for name, args in [('speed_up_queue', ['1']),
@@ -153,10 +153,8 @@ class BootstrapTests(unittest.TestCase):
                          commands=[dict(cmd=name, args=args)])
             response = client.post(PREFIX+'command.php', data={**self.form(uid),
                 'data':'0'*64+';'+json.dumps(batch)})
-            self.assertEqual(response.status_code, 422)
+            self.assertEqual(response.status_code, 400)
             self.assertEqual(response.json['result'], 'error')
-            self.assertEqual(response.json['code'], 'unsupported_action')
-            self.assertEqual(response.json['recovery'], 'reload_saved_empire')
             self.assertEqual(sessions.session(uid), before)
 
     def test_malformed_command_rejected(self):

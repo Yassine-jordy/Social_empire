@@ -182,7 +182,7 @@ class SoulMixerRouteTests(unittest.TestCase):
     def test_unrestored_queue_requests_never_grant_or_debit(self):
         self.assertEqual(self.post([self.buy()]).status_code, 200)
         before = self.snapshot()
-        for name, args in [('pop_queue_unit', [1, 45, 45]), ('speed_up_queue', [1]),
+        for name, args in [('pop_queue_unit', [1, 45, 45]),
                            ('unqueue_unit', [1, 1529])]:
             for _ in range(2):
                 self.assertEqual(self.post([(name, args)]).status_code, 422)
