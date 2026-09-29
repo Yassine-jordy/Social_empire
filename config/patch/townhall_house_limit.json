@@ -1,0 +1,17 @@
+[
+  {
+    "_source": "AcidCaos/socialemperors 880cde18b3fc233ab7a3914e95b81e9297aeaa64 config/patch/1-mega_patch.json",
+    "op": "add",
+    "path": "/globals/TOWNHALL_HOUSE_LIMIT",
+    "value": {
+      "26": 14,
+      "289": 14,
+      "139": 17,
+      "321": 17,
+      "140": 20,
+      "322": 20,
+      "141": 25,
+      "412": 100
+    }
+  }
+]
