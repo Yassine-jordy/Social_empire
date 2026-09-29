@@ -77,8 +77,8 @@ class SoulMixerRouteTests(unittest.TestCase):
                                xp=int(get_game_config()['levels'][7]['exp_required']))
         sessions.save_session(self.uid)
 
-    def post(self, commands, userid=None, client=None):
-        batch = dict(ts=0, first_number=0, accessToken='', tries=0, publishActions=False,
+    def post(self, commands, userid=None, client=None, number=0):
+        batch = dict(ts=0, first_number=number, accessToken='', tries=0, publishActions=False,
                      commands=[dict(cmd=name, args=args) for name, args in commands])
         return (client or self.client).post(PREFIX + 'command.php', data={
             'USERID': userid or self.uid, 'user_key': 'legacy', 'language': 'en',
@@ -179,15 +179,74 @@ class SoulMixerRouteTests(unittest.TestCase):
         self.assertEqual(self.post([('pop_unit', [40, 40, 0, 512, 45, 45, 0])]).status_code, 400)
         self.assertEqual(self.snapshot(), before)
 
-    def test_unrestored_queue_and_powerup_requests_never_grant_or_debit(self):
+    def test_unrestored_queue_requests_never_grant_or_debit(self):
         self.assertEqual(self.post([self.buy()]).status_code, 200)
         before = self.snapshot()
-        for name, args in [('push_queue_unit', [40, 40, 1529, 512, 1, 0]),
-                           ('pop_queue_unit', [1, 45, 45]), ('speed_up_queue', [1]),
-                           ('buy_powerups', [0]), ('unqueue_unit', [1, 1529])]:
+        for name, args in [('pop_queue_unit', [1, 45, 45]), ('speed_up_queue', [1]),
+                           ('unqueue_unit', [1, 1529])]:
             for _ in range(2):
                 self.assertEqual(self.post([(name, args)]).status_code, 422)
                 self.assertEqual(self.snapshot(), before)
+
+    def test_powerup_price_retry_reload_validation_and_atomic_failure(self):
+        self.assertEqual(self.post([self.buy()]).status_code, 200)
+        before = self.snapshot()
+        self.assertEqual(self.post([('buy_powerups', [0])]).status_code, 400)
+        self.assertEqual(self.snapshot(), before)
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'][0].extend([[684, 695], {}])
+        save['playerInfo']['cash'] = 50
+        sessions.save_session(self.uid)
+        prices = get_game_config()['globals']['SOUL_MIXER_POWERUPS_LEVELS']
+        for index, level in enumerate(prices):
+            before_cash = sessions.session(self.uid)['playerInfo']['cash']
+            request = [('buy_powerups', [index])]
+            self.assertEqual(self.post(request, number=index).status_code, 200)
+            self.assertEqual(sessions.session(self.uid)['playerInfo']['cash'], before_cash - level['cash_cost'])
+            sessions.load_saved_villages()
+            before = self.snapshot()
+            self.assertEqual(self.post(request, number=index).status_code, 200)
+            self.assertEqual(self.snapshot(), before)
+        for args in ([], [-1], [6], [True], ['0'], [0, 1], [5]):
+            before = self.snapshot()
+            self.assertEqual(self.post([('buy_powerups', args)], number=6).status_code, 400)
+            self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.post([('buy_powerups', [1])], number=0).status_code, 400)
+        sessions.session(self.uid)['playerInfo']['cash'] = 10
+        sessions.save_session(self.uid)
+        before = self.snapshot()
+        with patch.object(sessions.os, 'replace', side_effect=OSError('simulated')):
+            self.assertEqual(self.post([('buy_powerups', [0])], number=6).status_code, 503)
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.post([('buy_powerups', [0]), ('pop_queue_unit', [1, 45, 45])], number=6).status_code, 422)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_original_flash_mixing_queue_retry_and_reload(self):
+        self.assertEqual(self.post([self.buy()]).status_code, 200)
+        save = sessions.session(self.uid)
+        building = save['maps'][0]['items'][0]
+        building[1:3] = [53, 57]
+        building.extend([[684, 695], {'soulMixerInputs': [[684, 54, 57, 0, 0, 0], [695, 54, 58, 0, 0, 0]]}])
+        sessions.save_session(self.uid)
+        before = self.snapshot()
+        request = [('push_queue_unit', [53, 57, 1529, 831, 1, 0])]
+        for args in ([53, 57, 1529, 503, 1, 0], [52, 57, 1529, 831, 1, 0],
+                     [53, 57, 1529, 831, 0, 0], [53, 57, 1529, 831, True, 0]):
+            self.assertEqual(self.post([('push_queue_unit', args)]).status_code, 400)
+            self.assertEqual(self.snapshot(), before)
+        with patch('command.timestamp_now', return_value=1800000000):
+            self.assertEqual(self.post(request).status_code, 200)
+        after = self.snapshot()
+        queued = after[0]['privateState']['barracksQueues']['1']
+        self.assertEqual(queued, dict(ts=1800000000, amount=1, unit=831, r={'1': None}))
+        self.assertEqual(after[0]['maps'][0]['items'][0][7]['bq'], '1')
+        self.assertEqual(after[0]['maps'][0]['items'][0][6], [684, 695])
+        self.assertEqual(after[0]['playerInfo']['cash'], before[0]['playerInfo']['cash'])
+        sessions.load_saved_villages()
+        self.assertEqual(self.post(request).status_code, 200)
+        self.assertEqual(self.snapshot(), after)
+        self.assertEqual(self.post([('push_queue_unit', [53, 57, 1529, 831, 2, 0])]).status_code, 400)
+        self.assertEqual(self.snapshot(), after)
 
     def test_failed_save_preserves_purchase_money_and_inventory(self):
         before = self.snapshot()

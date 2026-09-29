@@ -108,7 +108,11 @@ class BootstrapTests(unittest.TestCase):
         with other.session_transaction() as state:
             self.assertEqual(state['GAMEVERSION'], 'SocialEmpires0926bsec.swf')
         client.get('/logout')
-        self.assertEqual(client.get('/ruffle.html?client=1.2.7').status_code, 302)
+        with patch.object(server.Path, 'is_file', return_value=True):
+            self.assertEqual(client.get('/ruffle.html?client=1.2.7').status_code, 302)
+        client.post('/', data={'username':'client-version', 'password':'test-password'})
+        response = client.get('/ruffle.html')
+        self.assertIn(b'SocialEmpires1.2.7sec.swf', response.data)
 
     def test_assets_cache_and_path_traversal(self):
         client = server.app.test_client(); prefix='/default01.static.socialpointgames.com/static/socialempires/'

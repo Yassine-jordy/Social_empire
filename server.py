@@ -61,6 +61,14 @@ def require_player_ownership():
     userid = session.get("USERID")
     if not username or not userid or get_userid(username) != userid or userid not in all_saves_userid():
         session.clear()
+        if page_request and 'client' in request.args:
+            selected = {'0.9.26b': 'SocialEmpires0926bsec.swf',
+                        '1.2.7': 'SocialEmpires1.2.7sec.swf'}.get(request.args['client'])
+            if selected is None:
+                return {"error": "Unsupported client version"}, 400
+            if not (Path(ASSETS_DIR) / 'flash' / selected).is_file():
+                return {"error": "Selected client is missing from the asset archive"}, 404
+            session['REQUESTED_GAMEVERSION'] = selected
         return redirect("/") if page_request else ({"error": "Authentication required"}, 401)
     if game_request:
         # A client identity is a consistency check, never the source of authority.
@@ -97,10 +105,11 @@ def login():
             if userid is None or userid not in all_saves_userid():
                 message = "This account has no empire."
             else:
+                selected_client = session.get('REQUESTED_GAMEVERSION', 'SocialEmpires0926bsec.swf')
                 session.clear()
                 session["ACCOUNT_USERNAME"] = username
                 session["USERID"] = userid
-                session["GAMEVERSION"] = "SocialEmpires0926bsec.swf"
+                session["GAMEVERSION"] = selected_client
 
                 print("[LOGIN] Username:", username)
                 print("[LOGIN] USERID:", userid)
@@ -203,16 +212,7 @@ def pvp_mark_seen():
 def ruffle():
     print(session)
 
-    if 'USERID' not in session:
-        return redirect("/")
-    if 'GAMEVERSION' not in session:
-        return redirect("/")
-
-    if session['USERID'] not in all_saves_userid():
-        return redirect("/")
-
-    # Explicit per-session compatibility test; keep the normal login default.
-    # 0.9.26b has no Soul Mixer panel. Never treat a query value as a file path.
+    # Carry the explicit launch client through a fresh browser's login redirect.
     if 'client' in request.args:
         clients = {'0.9.26b': 'SocialEmpires0926bsec.swf',
                    '1.2.7': 'SocialEmpires1.2.7sec.swf'}
@@ -221,6 +221,17 @@ def ruffle():
             return {"error": "Unsupported client version"}, 400
         if not (Path(ASSETS_DIR) / 'flash' / selected).is_file():
             return {"error": "Selected client is missing from the asset archive"}, 404
+        session['REQUESTED_GAMEVERSION'] = selected
+
+    if 'USERID' not in session:
+        return redirect("/")
+    if 'GAMEVERSION' not in session:
+        return redirect("/")
+
+    if session['USERID'] not in all_saves_userid():
+        return redirect("/")
+
+    if 'client' in request.args:
         session['GAMEVERSION'] = selected
     
     USERID = session['USERID']
@@ -433,7 +444,7 @@ def command_response():
         return {"error": "Invalid commands"}, 400
 
     try:
-        command(USERID, data)
+        command(USERID, data, client_id=client_id)
     except NotImplementedError as error:
         return {"result": "error", "error": str(error)}, 422
     except (ValueError, TypeError, KeyError, IndexError) as error:

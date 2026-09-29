@@ -2,7 +2,8 @@
 
 Ranks/timers/prices use the explicitly authorized upstream reconstruction,
 with provenance in config/soul_mixer_restoration.json. They are not historical
-production data. Production remains disabled pending a server-result handshake.
+production data. The original Flash client selects the result; the server
+validates eligibility and persists its queue using the upstream protocol.
 """
 import math
 import secrets
@@ -104,6 +105,80 @@ def reject_unrestored_mixing():
     # Explicit rather than fake success, even if a mod adds some missing fields:
     # the stock popup still rolls locally and ignores server-selected results.
     raise NotImplementedError(MISSING_DATA + '; authoritative result handshake also required')
+
+
+def buy_powerup(save, args, config):
+    """Upstream op.cmd_sm_powerup: one zero-based price-table index.
+
+    The stock popup sends payment commands when START MIXING is pressed,
+    not when its local preview changes. No result is selected by this command.
+    """
+    if len(args) != 1:
+        raise ValueError('Invalid Soul Mixer powerup arguments')
+    index = integer(args[0])
+    levels = config['globals']['SOUL_MIXER_POWERUPS_LEVELS']
+    if index >= len(levels):
+        raise ValueError('Invalid Soul Mixer powerup index')
+    eligible = {int(unit['id']) for unit in ranked_units(config)}
+    mixers = [row for town in save['maps'] for row in town['items']
+              if row[0] == BUILDING_ID and len(row) > 6 and len(row[6]) == 2
+              and all(unit in eligible for unit in row[6])]
+    if len(mixers) != 1:
+        raise ValueError('Powerup requires one owned Soul Mixer with two inputs')
+    attrs = mixers[0][7] if len(mixers[0]) > 7 else {}
+    queue = save['privateState'].get('barracksQueues', {}).get(str(attrs.get('bq')), {})
+    if queue.get('amount', 0):
+        raise ValueError('Soul Mixer is already mixing')
+    cost = integer(levels[index]['cash_cost'], 1)
+    if save['playerInfo']['cash'] < cost:
+        raise ValueError('Insufficient cash for Soul Mixer powerup')
+    save['playerInfo']['cash'] -= cost
+
+
+def start_mixing(save, args, config, now):
+    """1.2.7 addUnit: x, y, building ID, client result ID, queue ID, normal flag.
+
+    Matches upstream cmd_push_queue_unit / push_queued_unit. The client restores
+    its deadline as queue.ts + result.sm_training_time; ts is NOT the deadline.
+    Original preview/result selection stays client-side, as explicitly requested.
+    """
+    if len(args) != 6:
+        raise ValueError('Invalid Soul Mixer queue arguments')
+    for value in args:
+        integer(value)
+    x, y, building_id, result_id, queue_id, normal_training = args
+    if building_id != BUILDING_ID or normal_training != 0:
+        raise NotImplementedError('Only Soul Mixer queue creation is restored')
+    integer(queue_id, 1)
+    units = {int(unit['id']): unit for unit in ranked_units(config)}
+    if result_id not in units:
+        raise ValueError('Ineligible Soul Mixer result')
+    matches = [(town, row) for town in save['maps'] for row in town['items']
+               if row[:3] == [BUILDING_ID, x, y]]
+    if len(matches) != 1:
+        raise ValueError('Soul Mixer is missing or ambiguous')
+    town, building = matches[0]
+    if len(building) < 8 or len(building[6]) != 2 or any(u not in units for u in building[6]):
+        raise ValueError('Two eligible owned inputs required')
+    level = sum(int(row['exp_required']) <= town['xp'] for row in config['levels'])
+    if level < int(config['globals']['SOUL_MIXER_MIN_LEVEL']):
+        raise ValueError('Soul Mixer level requirement not met')
+    key = str(queue_id)
+    attrs = building[7]
+    queues = save['privateState'].setdefault('barracksQueues', {})
+    for other_town in save['maps']:
+        for row in other_town['items']:
+            if row is not building and len(row) > 7 and str(row[7].get('bq')) == key:
+                raise ValueError('Queue belongs to another building')
+    old = queues.get(str(attrs.get('bq')), {})
+    if old.get('amount', 0):
+        if str(attrs.get('bq')) == key and old.get('unit') == result_id and old['amount'] == 1:
+            return  # Network retry must not add a result or restart its timer.
+        raise ValueError('Soul Mixer already has a result in production')
+    if key in queues:
+        raise ValueError('Queue ID is already in use')
+    attrs['bq'] = key
+    queues[key] = {'ts': integer(now), 'amount': 1, 'unit': result_id, 'r': {'1': None}}
 
 
 def store_input(save, building, args, config):

@@ -1,4 +1,5 @@
 import json
+import hashlib
 
 from sessions import session, save_session, save_transaction
 from get_game_config import get_game_config, get_level_from_xp, get_name_from_item_id, get_attribute_from_mission_id, get_xp_from_level, get_attribute_from_item_id, get_item_from_subcat_functional
@@ -18,7 +19,7 @@ def get_strategy_type(id):
         return "Aggressive"
     return "Unknown Strategy"
 
-def command(USERID, data):
+def command(USERID, data, client_id=None):
     timestamp = data["ts"]
     first_number = data["first_number"]
     accessToken = data["accessToken"]
@@ -26,16 +27,40 @@ def command(USERID, data):
     publishActions = data["publishActions"]
     commands = data["commands"]
 
-    with save_transaction(USERID):
+    with save_transaction(USERID) as save:
+        # Flash retries the same numbered batch with different ts/tries fields.
+        # Persist the receipt with the debit so a retry cannot charge twice.
+        receipt_key = None
+        if any(comm['cmd'] == 'buy_powerups' for comm in commands):
+            soul_mixer.integer(first_number)
+            if not isinstance(client_id, str) or not client_id or len(client_id) > 128:
+                raise ValueError('Missing Soul Mixer client identity')
+            receipt_key = hashlib.sha256(f'{client_id}:{first_number}'.encode()).hexdigest()
+            fingerprint = hashlib.sha256(json.dumps(commands, sort_keys=True).encode()).hexdigest()
+            receipts = save['privateState'].setdefault('soulMixerPaymentReceipts', {})
+            if receipt_key in receipts:
+                if receipts[receipt_key] != fingerprint:
+                    raise ValueError('Changed Soul Mixer retry')
+                return
+            if len(receipts) >= 4096:
+                raise ValueError('Soul Mixer payment receipt limit reached')
         for comm in commands:
             do_command(USERID, comm['cmd'], comm['args'])
+        if receipt_key is not None:
+            receipts[receipt_key] = fingerprint
 
 
 def do_command(USERID, cmd, args):
     save = session(USERID)
     print (" [+] COMMAND: ", cmd, "(", args, ") -> ", sep='', end='')
 
-    if cmd == Constant.CMD_GAME_STATUS:
+    if cmd == 'buy_powerups':
+        soul_mixer.buy_powerup(save, args, get_game_config())
+
+    elif cmd == 'push_queue_unit':
+        soul_mixer.start_mixing(save, args, get_game_config(), timestamp_now())
+
+    elif cmd == Constant.CMD_GAME_STATUS:
         print(" ".join(args))
 
     elif cmd == Constant.CMD_BUY:
