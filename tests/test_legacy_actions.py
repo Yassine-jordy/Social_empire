@@ -26,6 +26,38 @@ class LegacyActionsTests(unittest.TestCase):
         return self.client.post(PREFIX+'command.php',data=dict(USERID=self.uid,user_key='legacy',
             language='en',client_id='legacy-test',data='0'*64+';'+json.dumps(batch)))
 
+    def test_collect_existing_queue_ready_retry_reload(self):
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'] = [[1529,53,57,0,0,0,[684,695],{'bq':'1'}]]
+        save['privateState']['barracksQueues'] = {'1':dict(ts=0,amount=1,unit=829,r={'1':None})}
+        sessions.save_session(self.uid)
+        action = [('pop_queue_unit',['1',54,58])]
+        self.assertEqual(self.post(action).status_code,200)
+        sessions.load_saved_villages()
+        save = sessions.session(self.uid)
+        self.assertEqual(save['privateState']['barracksQueues'],{})
+        self.assertEqual(save['maps'][0]['items'][0][6:],[ [684,695], {} ])
+        self.assertEqual(sum(row[0] == 829 for row in save['maps'][0]['items']),1)
+        before = copy.deepcopy(save)
+        self.assertEqual(self.post(action).status_code,200)
+        self.assertEqual(sessions.session(self.uid),before)
+        self.assertEqual(self.post(action,number=2).status_code,400)
+        self.assertEqual(sessions.session(self.uid),before)
+
+    def test_collect_unready_invalid_and_occupied_are_atomic(self):
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'] = [[1529,53,57,0,0,0,[],{'bq':'1'}]]
+        save['privateState']['barracksQueues'] = {'1':dict(ts=1800000000,amount=1,unit=829)}
+        sessions.save_session(self.uid)
+        before = copy.deepcopy(save)
+        with patch('command.timestamp_now', return_value=1800000001):
+            for args in (['1',54,58], ['2',54,58], ['1',-1,58], ['1',100,58], ['1',54]):
+                self.assertEqual(self.post([('pop_queue_unit',args)]).status_code,400)
+                self.assertEqual(sessions.session(self.uid),before)
+        with patch('command.timestamp_now', return_value=1800200000):
+            self.assertEqual(self.post([('pop_queue_unit',['1',53,57])]).status_code,400)
+            self.assertEqual(sessions.session(self.uid),before)
+
     def test_store_frombug_transfer_retry_reload_and_validation(self):
         save = sessions.session(self.uid)
         save['maps'][0]['items'] = [[299,59,55,0,0,0,[],{}]]

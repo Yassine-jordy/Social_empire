@@ -8,6 +8,7 @@ from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from database import record_pvp_battle
 import soul_mixer
 import legacy_actions
+import queue_collection
 
 def get_strategy_type(id):
     if id == 8:
@@ -29,7 +30,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS for comm in commands):
+        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] == 'pop_queue_unit' for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -58,7 +59,9 @@ def do_command(USERID, cmd, args):
     save = session(USERID)
     print (" [+] COMMAND: ", cmd, "(", args, ") -> ", sep='', end='')
 
-    if cmd == 'store_item_frombug':
+    if cmd == 'pop_queue_unit':
+        queue_collection.collect(save, args, get_game_config(), timestamp_now())
+    elif cmd == 'store_item_frombug':
         legacy_actions.store_item_frombug(save, args, get_game_config())
     elif cmd == 'speed_up_queue':
         legacy_actions.speed_up_queue(save, args, get_game_config(), timestamp_now())

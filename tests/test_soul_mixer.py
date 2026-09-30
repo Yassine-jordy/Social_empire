@@ -179,13 +179,13 @@ class SoulMixerRouteTests(unittest.TestCase):
         self.assertEqual(self.post([('pop_unit', [40, 40, 0, 512, 45, 45, 0])]).status_code, 400)
         self.assertEqual(self.snapshot(), before)
 
-    def test_unrestored_queue_requests_never_grant_or_debit(self):
+    def test_invalid_or_unrestored_queue_requests_never_grant_or_debit(self):
         self.assertEqual(self.post([self.buy()]).status_code, 200)
         before = self.snapshot()
         for name, args in [('pop_queue_unit', [1, 45, 45]),
                            ('unqueue_unit', [1, 1529])]:
             for _ in range(2):
-                self.assertEqual(self.post([(name, args)]).status_code, 422)
+                self.assertEqual(self.post([(name, args)]).status_code, 400 if name == 'pop_queue_unit' else 422)
                 self.assertEqual(self.snapshot(), before)
 
     def test_powerup_price_retry_reload_validation_and_atomic_failure(self):
@@ -218,7 +218,7 @@ class SoulMixerRouteTests(unittest.TestCase):
         with patch.object(sessions.os, 'replace', side_effect=OSError('simulated')):
             self.assertEqual(self.post([('buy_powerups', [0])], number=6).status_code, 503)
         self.assertEqual(self.snapshot(), before)
-        self.assertEqual(self.post([('buy_powerups', [0]), ('pop_queue_unit', [1, 45, 45])], number=6).status_code, 422)
+        self.assertEqual(self.post([('buy_powerups', [0]), ('pop_queue_unit', [1, 45, 45])], number=6).status_code, 400)
         self.assertEqual(self.snapshot(), before)
 
     def test_original_flash_mixing_queue_retry_and_reload(self):
