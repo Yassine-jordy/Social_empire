@@ -9,6 +9,7 @@ from database import record_pvp_battle
 import soul_mixer
 import legacy_actions
 import queue_collection
+import collectables
 
 def get_strategy_type(id):
     if id == 8:
@@ -30,7 +31,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] == 'pop_queue_unit' for comm in commands):
+        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable') for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -554,7 +555,7 @@ def do_command(USERID, cmd, args):
         raise NotImplementedError('Quest results require a verified persisted start; not restored yet')
 
     elif cmd == Constant.CMD_ADD_COLLECTABLE:
-        raise NotImplementedError('Collectable persistence has not been restored')
+        collectables.add(save, args)
 
     elif cmd == Constant.CMD_END_ATTACK:
         raise NotImplementedError('PvP result submission is paused until coordinated battle/save persistence is restored')

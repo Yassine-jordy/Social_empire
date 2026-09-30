@@ -26,6 +26,31 @@ class LegacyActionsTests(unittest.TestCase):
         return self.client.post(PREFIX+'command.php',data=dict(USERID=self.uid,user_key='legacy',
             language='en',client_id='legacy-test',data='0'*64+';'+json.dumps(batch)))
 
+    def test_collectable_combat_flow_retry_reload(self):
+        save = sessions.session(self.uid)
+        save['maps'][0]['items'] = [[547,57,15,0,0,0]]
+        save['privateState'].pop('collections', None)
+        sessions.save_session(self.uid)
+        self.assertEqual(self.post([('kill',[57,15,547,0,'u'])]).status_code,200)
+        before = copy.deepcopy(sessions.session(self.uid))
+        action = [('add_collectable',[6,3])]
+        self.assertEqual(self.post(action,number=2).status_code,200)
+        sessions.load_saved_villages()
+        after = copy.deepcopy(sessions.session(self.uid))
+        self.assertEqual(after['privateState']['collections'][6],[0,0,0,1,0,0])
+        self.assertEqual(after['maps'],before['maps'])
+        self.assertEqual(after['playerInfo'],before['playerInfo'])
+        self.assertEqual(self.post(action,number=2).status_code,200)
+        self.assertEqual(sessions.session(self.uid),after)
+        for args in ([],[0,3],[24,3],[6,0],[6,6],[True,3],[6,'3']):
+            self.assertEqual(self.post([('add_collectable',args)],number=3).status_code,400)
+            self.assertEqual(sessions.session(self.uid),after)
+        with patch.object(sessions.os,'replace',side_effect=OSError('simulated')):
+            self.assertEqual(self.post(action,number=3).status_code,503)
+        self.assertEqual(sessions.session(self.uid),after)
+        self.assertEqual(self.post(action,number=3).status_code,200)
+        self.assertEqual(sessions.session(self.uid)['privateState']['collections'][6][3],2)
+
     def test_collect_existing_queue_ready_retry_reload(self):
         save = sessions.session(self.uid)
         save['maps'][0]['items'] = [[1529,53,57,0,0,0,[684,695],{'bq':'1'}]]
