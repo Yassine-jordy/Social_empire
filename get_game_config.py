@@ -65,6 +65,12 @@ def patch_game_config():
                     print(" * Mod applied:", mod)
 
     remove_duplicate_items()
+    with open(os.path.join(CONFIG_DIR, 'normal_training_times.json'), encoding='utf-8-sig') as source:
+        training = json.load(source)['units']
+    for item in __game_config['items']:
+        duration = training.get(str(item['id']))
+        if item.get('type') == 'u' and duration:
+            item['training_time'] = duration
     # Apply only Soul Mixer fields by item ID, never upstream array indices or
     # whole item records. Provenance identifies these as reconstructed balance.
     with open(os.path.join(CONFIG_DIR, 'soul_mixer_restoration.json'), encoding='utf-8') as source:

@@ -10,6 +10,7 @@ import soul_mixer
 import legacy_actions
 import queue_collection
 import collectables
+import normal_training
 
 def get_strategy_type(id):
     if id == 8:
@@ -31,7 +32,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable') for comm in commands):
+        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable') or normal_training.is_request(comm) for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -74,7 +75,10 @@ def do_command(USERID, cmd, args):
         soul_mixer.buy_powerup(save, args, get_game_config())
 
     elif cmd == 'push_queue_unit':
-        soul_mixer.start_mixing(save, args, get_game_config(), timestamp_now())
+        if normal_training.is_request({'cmd': cmd, 'args': args}):
+            normal_training.start(save, args, get_game_config(), timestamp_now())
+        else:
+            soul_mixer.start_mixing(save, args, get_game_config(), timestamp_now())
 
     elif cmd == Constant.CMD_GAME_STATUS:
         print(" ".join(args))
