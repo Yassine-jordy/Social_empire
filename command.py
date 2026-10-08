@@ -11,6 +11,7 @@ import legacy_actions
 import queue_collection
 import collectables
 import normal_training
+import training_cancellation
 
 def get_strategy_type(id):
     if id == 8:
@@ -32,7 +33,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable') or normal_training.is_request(comm) for comm in commands):
+        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable', 'unqueue_unit') or normal_training.is_request(comm) for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -61,7 +62,9 @@ def do_command(USERID, cmd, args):
     save = session(USERID)
     print (" [+] COMMAND: ", cmd, "(", args, ") -> ", sep='', end='')
 
-    if cmd == 'pop_queue_unit':
+    if cmd == 'unqueue_unit':
+        training_cancellation.cancel(save, args, get_game_config())
+    elif cmd == 'pop_queue_unit':
         queue_collection.collect(save, args, get_game_config(), timestamp_now())
     elif cmd == 'store_item_frombug':
         legacy_actions.store_item_frombug(save, args, get_game_config())
