@@ -1,0 +1,25 @@
+[
+  {
+    "op": "add",
+    "path": "/globals/HONOR_POINT_QUEST",
+    "value": [
+      5,
+      10,
+      15
+    ]
+  },
+  {
+    "op": "add",
+    "path": "/globals/HONOR_POINT_QUEST_FIRST_TIME",
+    "value": [
+      10,
+      20,
+      30
+    ]
+  },
+  {
+    "op": "add",
+    "path": "/globals/HONOR_POINT_QUEST_LOSE",
+    "value": 0
+  }
+]

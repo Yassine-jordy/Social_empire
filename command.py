@@ -14,6 +14,7 @@ import normal_training
 import training_cancellation
 import building_upgrades
 import collection_redemption
+import quest_commands
 
 def get_strategy_type(id):
     if id == 8:
@@ -35,7 +36,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable', 'unqueue_unit', 'finish_collection') or normal_training.is_request(comm) or building_upgrades.is_upgrade(comm) for comm in commands):
+        if any(comm['cmd'] in quest_commands.COMMANDS or comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable', 'unqueue_unit', 'finish_collection') or normal_training.is_request(comm) or building_upgrades.is_upgrade(comm) for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -563,11 +564,8 @@ def do_command(USERID, cmd, args):
         save["privateState"]["strategy"] = strategy_type
         print(f"Set defense strategy type to {type_name}")
 
-    elif cmd == Constant.CMD_START_QUEST:
-        raise NotImplementedError('Quest start state has not been restored')
-
-    elif cmd == Constant.CMD_END_QUEST:
-        raise NotImplementedError('Quest results require a verified persisted start; not restored yet')
+    elif cmd in quest_commands.COMMANDS:
+        quest_commands.handle(save, cmd, args, get_game_config(), timestamp_now())
 
     elif cmd == Constant.CMD_ADD_COLLECTABLE:
         collectables.add(save, args)

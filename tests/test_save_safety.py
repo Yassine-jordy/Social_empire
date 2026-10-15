@@ -56,7 +56,7 @@ class SaveSafetyTests(unittest.TestCase):
         for name in ('unknown','upgrade','start_quest','add_collectable'):
             with self.subTest(name=name):
                 before=self.snapshot()
-                self.assertEqual(self.post([('name_map',[0,'Must roll back']),(name,[])]).status_code,400 if name == 'add_collectable' else 422)
+                self.assertEqual(self.post([('name_map',[0,'Must roll back']),(name,[])]).status_code,400 if name in ('add_collectable','start_quest') else 422)
                 self.assertEqual(self.snapshot(),before)
 
     def test_write_failure_rolls_back_batch(self):
@@ -108,7 +108,7 @@ class SaveSafetyTests(unittest.TestCase):
         for _ in range(2):
             response = self.post([('name_map', [0, 'Must not persist']),
                                   ('end_quest', [json.dumps(result)])])
-            self.assertEqual(response.status_code, 422)
+            self.assertEqual(response.status_code, 400)
             self.assertEqual(self.snapshot(), before)
 
     def test_concurrent_batches_do_not_lose_updates(self):
