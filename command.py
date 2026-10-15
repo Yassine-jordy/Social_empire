@@ -12,6 +12,7 @@ import queue_collection
 import collectables
 import normal_training
 import training_cancellation
+import building_upgrades
 
 def get_strategy_type(id):
     if id == 8:
@@ -33,7 +34,7 @@ def command(USERID, data, client_id=None):
     commands = data["commands"]
 
     with save_transaction(USERID) as save:
-        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable', 'unqueue_unit') or normal_training.is_request(comm) for comm in commands):
+        if any(comm['cmd'] in legacy_actions.COMMANDS or comm['cmd'] in ('pop_queue_unit', 'add_collectable', 'unqueue_unit') or normal_training.is_request(comm) or building_upgrades.is_upgrade(comm) for comm in commands):
             if legacy_actions.receipt(save, commands, client_id, first_number):
                 return
         # Flash retries the same numbered batch with different ts/tries fields.
@@ -52,8 +53,12 @@ def command(USERID, data, client_id=None):
                 return
             if len(receipts) >= 4096:
                 raise ValueError('Soul Mixer payment receipt limit reached')
-        for comm in commands:
-            do_command(USERID, comm['cmd'], comm['args'])
+        pending = iter(commands)
+        for comm in pending:
+            if building_upgrades.is_upgrade(comm):
+                building_upgrades.apply(save, comm, next(pending, None), get_game_config(), timestamp_now())
+            else:
+                do_command(USERID, comm['cmd'], comm['args'])
         if receipt_key is not None:
             receipts[receipt_key] = fingerprint
 
